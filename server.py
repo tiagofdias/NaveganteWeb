@@ -55,7 +55,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_OPTIONS(self):
         access = getattr(self.server, 'bridge', None)
-        allowed_paths = {'/api/readers', '/api/bridge'} | {'/api/'+op for op in OPERATIONS}
+        allowed_paths = {'/api/readers', '/api/bridge', '/api/pair'} | {'/api/'+op for op in OPERATIONS}
         requested = {h.strip().lower() for h in self.headers.get('Access-Control-Request-Headers', '').split(',') if h.strip()}
         if (self.headers.get('Host') != f'{HOST}:{self.server.server_port}'
                 or not access or not access.allows_origin(self.headers.get('Origin'))
@@ -89,6 +89,27 @@ class Handler(BaseHTTPRequestHandler):
         self.reply(200, (ROOT / file).read_bytes(), mime)
 
     def do_POST(self):
+        if self.path == '/api/pair':
+            access = getattr(self.server, 'bridge', None)
+            if (self.headers.get('Host') != f'{HOST}:{self.server.server_port}' or not access
+                    or not access.allows_origin(self.headers.get('Origin'))):
+                return self.reply(403, {'error': 'Site não autorizado.'})
+            if self.headers.get_content_type() != 'application/json':
+                return self.reply(415, {'error': 'Pedido inválido.'})
+            try:
+                length = int(self.headers.get('Content-Length', '0'))
+                if not 0 < length <= 128:
+                    raise ValueError()
+                data = json.loads(self.rfile.read(length))
+                if data != {'client': 'navegante-web'}:
+                    raise ValueError()
+            except (ValueError, UnicodeError):
+                return self.reply(400, {'error': 'Pedido de ligação inválido.'})
+            if not access.approve:
+                return self.reply(409, {'error': 'Abre a aplicação Navegante Link para autorizar a ligação.'})
+            if not access.approve():
+                return self.reply(403, {'error': 'Ligação não autorizada na aplicação. Tenta novamente e escolhe Autorizar.'})
+            return self.reply(200, {'service': 'navegante-local', 'version': 1, 'token': access.token})
         if not self.valid_request() or not self.headers.get('Origin'):
             return self.reply(403, {'error': 'Origem não autorizada.'})
         operation = self.path.removeprefix('/api/')

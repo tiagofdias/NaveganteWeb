@@ -134,7 +134,7 @@ function usefulCardFields(items, kind) {
 }
 async function request(path, body) {
   if(demo.enabled)return demoRequest(path,body);
-  if(remoteMode&&!bridgeClient.token)throw Error('Liga primeiro este site ao leitor do teu PC com o código do terminal.');
+  if(remoteMode&&!bridgeClient.token&&path!=='pair')throw Error('Abre o Navegante Link no teu PC e escolhe «Ligar leitor».');
   const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),150000);
   try {
     const headers=remoteMode?{'X-Navegante-Token':bridgeClient.token}:{};
@@ -143,11 +143,11 @@ async function request(path, body) {
     if(body!==undefined){options.method='POST';headers['Content-Type']='application/json';options.body=JSON.stringify(body);}
     const response=await fetch((remoteMode?bridgeAddress:'')+'/api/'+path,options);
     const data=await response.json();
-    if(remoteMode&&response.status===403){bridgeClient.ready=false;bridgeClient.token='';throw Error('Ligação recusada. Confirma o domínio autorizado no terminal e introduz novamente o código.');}
+    if(remoteMode&&response.status===403){bridgeClient.ready=false;bridgeClient.token='';throw Error(path==='pair'?(data.error||'Autoriza a ligação na aplicação Navegante Link.'):'A ligação terminou. Abre o Navegante Link e liga novamente o leitor.');}
     if(!response.ok)throw new Error(data.error||'Não foi possível concluir o pedido.');
     return data;
   } catch(error) {
-    if(remoteMode&&error instanceof TypeError){bridgeClient.ready=false;bridgeClient.token='';throw Error('Não foi possível ligar ao teu PC. Confirma que a ponte está aberta e que permitiste o acesso à rede local no navegador.');}
+    if(remoteMode&&error instanceof TypeError){bridgeClient.ready=false;bridgeClient.token='';throw Error('Não foi possível ligar ao leitor. Abre o Navegante Link e permite a ligação ao teu PC quando o navegador pedir.');}
     if(error.name==='AbortError')throw new Error('O pedido demorou demasiado. Se pediste um pagamento, consulta a referência do pedido antes de repetir.');
     throw error;
   } finally {clearTimeout(timeout);}
@@ -164,7 +164,6 @@ function presentation() {
   $('bridge-form').hidden=bridgeClient.ready;
   $('bridge-guide').hidden=bridgeClient.ready;
   $('bridge-disconnect').hidden=!bridgeClient.ready;
-  $('bridge-command').textContent='python server.py --web-origin '+location.origin;
   document.querySelector('.local-badge').replaceChildren(node('span',null,'status-dot'),document.createTextNode(demo.enabled?'Modo demonstração':remoteMode?(bridgeClient.ready?'Ligado ao teu PC':'Leitor por ligar'):'Ligação local'));
   document.body.dataset.stage=view;
   $('main').setAttribute('aria-busy',String(state.busy));
@@ -264,7 +263,7 @@ async function changeDemo(enabled) {
   demo.enabled=enabled;demo.card=null;demo.quote=null;demo.sale=null;demo.scenario=null;
   resetInterface();
   if(!remoteMode||demo.enabled||bridgeClient.ready)await action('status',refresh);
-  else {$('reader').replaceChildren(new Option('Liga primeiro o leitor do teu PC',''));$('status').textContent='Usa o código do terminal para ligar o leitor ou experimenta a demo.';controls();}
+  else {$('reader').replaceChildren(new Option('Liga primeiro o leitor do teu PC',''));$('status').textContent='Abre o Navegante Link e liga o leitor ou experimenta a demo.';controls();}
   focusStage();
 }
 async function refresh() {
@@ -507,13 +506,11 @@ window.addEventListener('beforeunload',event=>{if(!demo.enabled&&state.purchase&
 $('demo-toggle').addEventListener('click',()=>changeDemo(!demo.enabled));
 $('demo-reset').addEventListener('click',()=>changeDemo(true));
 $('bridge-form').addEventListener('submit',event=>{event.preventDefault();action('bridge-status',async()=>{
-  const code=$('bridge-code').value.trim();
-  if(!/^[A-Za-z0-9_-]{20,128}$/.test(code))throw Error('Copia o código de ligação completo apresentado no terminal.');
-  bridgeClient.token=code;
+  $('bridge-status').textContent='Autoriza a ligação na janela do Navegante Link…';
   try {
-    const info=await request('bridge');
-    if(info.service!=='navegante-local'||info.version!==1)throw Error('A ponte local precisa de ser atualizada com a versão atual do projeto.');
-    bridgeClient.ready=true;$('bridge-code').value='';
+    const info=await request('pair',{client:'navegante-web'});
+    if(info.service!=='navegante-local'||info.version!==1||typeof info.token!=='string'||!/^[A-Za-z0-9_-]{20,128}$/.test(info.token))throw Error('Atualiza o Navegante Link e tenta novamente.');
+    bridgeClient.token=info.token;bridgeClient.ready=true;
     await refresh();$('bridge-status').textContent='Ligado ao leitor do teu PC. Podes inserir o passe e iniciar a leitura.';
   }catch(error){bridgeClient.token='';bridgeClient.ready=false;throw error;}
 });});
@@ -540,5 +537,5 @@ passPreview.addEventListener('pointermove',event=>{
 passPreview.addEventListener('pointerleave',resetCardMotion);
 passPreview.addEventListener('pointercancel',resetCardMotion);
 reducedMotion.addEventListener('change',resetCardMotion);
-if(remoteMode){$('reader').replaceChildren(new Option('Liga primeiro o leitor do teu PC',''));$('status').textContent='Liga o leitor através do código do terminal ou experimenta a demo.';controls();}
+if(remoteMode){$('reader').replaceChildren(new Option('Liga primeiro o leitor do teu PC',''));$('status').textContent='Abre o Navegante Link e liga o leitor ou experimenta a demo.';controls();}
 else action('status',refresh);

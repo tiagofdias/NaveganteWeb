@@ -5,7 +5,7 @@ from urllib.parse import urlsplit
 TOKEN_HEADER = 'X-Navegante-Token'
 
 class BridgeAccess:
-    def __init__(self, origin='', token=None):
+    def __init__(self, origin='', token=None, approve=None):
         origin = origin.rstrip('/')
         if origin:
             url = urlsplit(origin)
@@ -14,6 +14,7 @@ class BridgeAccess:
                 raise ValueError('O domínio autorizado deve ser uma origem HTTPS exata, sem caminhos ou wildcards.')
         self.origin = origin
         self.token = token if token is not None else secrets.token_urlsafe(32)
+        self.approve = approve
 
     def allows_origin(self, origin):
         return bool(self.origin) and origin == self.origin

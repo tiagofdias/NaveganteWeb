@@ -6,25 +6,21 @@ Aplicação web local para consultar e carregar um passe Navegante com um leitor
 
 ## Usar o site online com o leitor USB
 
-O site pode ser usado por qualquer pessoa com **Windows, Python 3.13 e um leitor PC/SC compatível**. Cada pessoa usa o seu próprio cartão e uma ponte no seu próprio PC; não existe uma conta de proprietário a limitar o acesso.
+O site pode ser usado por qualquer pessoa com **Windows 64 bits e um leitor PC/SC compatível**. Não é preciso instalar Python, abrir um terminal ou copiar códigos.
 
-1. Descarregar este repositório em **Code → Download ZIP** e extrair a pasta.
-2. Ligar o leitor e abrir `start-bridge.cmd`. Se o comando `python` não existir, instalar Python e ativar a opção de o adicionar ao PATH.
-3. Premir Enter para autorizar o site público (ou colar outra origem HTTPS). A ponte apresenta um código temporário; manter o terminal aberto.
-4. No site, colar esse código em **Ligar ao meu PC** e permitir o acesso local/do dispositivo quando o navegador pedir.
-5. Inserir o cartão, ler, escolher o carregamento e seguir os passos de pagamento e gravação.
+1. [Descarregar o Navegante Link](https://github.com/tiagofdias/NaveganteWeb/releases/download/v1.1.0/Navegante-Link.exe) e abrir a aplicação.
+2. Ligar o leitor USB e abrir o [site público](https://navegante-web-xi.vercel.app).
+3. Escolher **Ligar leitor** no site e autorizar a ligação na janela do Navegante Link. Permitir também o acesso local/do dispositivo quando o navegador pedir.
+4. Inserir o passe e seguir os passos de leitura, pagamento e carregamento. Manter a aplicação aberta até terminar.
 
-Alternativa pelo terminal:
+Cada pessoa usa o seu cartão e leitor, sem conta GitHub ou Vercel. A aplicação só aceita o domínio público autorizado. O emparelhamento é aprovado numa janela, e a credencial fica apenas em memória; não é enviada para a Vercel nem introduzida manualmente. Os serviços oficiais continuam a decidir preços, elegibilidade e autorizações de carregamento.
 
-```powershell
-python server.py --web-origin https://navegante-web-xi.vercel.app
-```
+**Compatibilidade:** Windows 64 bits e leitor PC/SC; ligação HTTPS → localhost verificada em Edge. Preferir Edge ou Chrome atualizados. macOS e Linux ainda não têm aplicação distribuída. Sem a aplicação, pode experimentar o modo demo.
 
-O domínio deve coincidir exatamente com o endereço aberto no navegador. Não são aceites wildcards nem outros sites. O código muda a cada arranque, só fica em memória e não é enviado para a Vercel. A ponte escuta apenas em `127.0.0.1:8765` e conserva as operações de cartão e bilhética no PC do utilizador. As operações reais continuam a depender dos serviços oficiais e da elegibilidade de cada cartão.
+**Distribuição:** esta versão é portátil e ainda não tem assinatura digital de editor. Não se deve desativar as proteções do Windows para a executar. Uma distribuição de produção para o público deverá incluir assinatura digital.
 
-**Compatibilidade:** ponte Windows PC/SC; ligação HTTPS → localhost verificada em Edge. Preferir Edge ou Chrome atualizados, permitindo a ligação local ao site. macOS, Linux e outros navegadores não foram validados. Sem a ponte, está disponível o modo demo.
+## Desenvolvimento local
 
-## Executar
 
 Requisitos: Windows, Python 3.13 e leitor instalado. A aplicação usa apenas a biblioteca padrão do Python; não precisa de npm, pip ou Java para funcionar.
 

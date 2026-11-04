@@ -16,6 +16,7 @@ dist/
 *.log
 web/assets/
 docs/card-art.md
+release/
 
 .vercel
 .env*

@@ -25,7 +25,8 @@ class Quiet(server.Handler):
 server.PCSC=Readers
 server.APP=Service()
 http=ThreadingHTTPServer(('127.0.0.1',0),Quiet)
-http.bridge=BridgeAccess('${origin}','${token}')
+approvals=iter([False,True])
+http.bridge=BridgeAccess('${origin}','${token}',approve=lambda:next(approvals,False))
 print(json.dumps({'port':http.server_port}),flush=True)
 http.serve_forever()
 `;
@@ -55,13 +56,11 @@ http.serve_forever()
     });
     await page.goto(origin);
     assert.equal(calls.length,0,'Hosted visits must not access the local bridge automatically');
-    await page.locator('#bridge-code').fill('invalid-code-012345678901234567890');
     await page.locator('#bridge-connect').click();
     await page.locator('#bridge-status[data-error=true]').waitFor();
-    await page.locator('#bridge-code').fill(token);
     await page.locator('#bridge-connect').click();
     await page.waitForFunction(()=>!document.querySelector('#bridge-disconnect').hidden);
-    assert.equal(await page.locator('#bridge-code').inputValue(),'');
+    assert.equal(await page.locator('#bridge-code').count(),0,'No manual pairing code in consumer UI');
     await page.locator('#reader').selectOption('THRC Mock Reader 0');
     await page.locator('#read').click();
     await page.waitForFunction(()=>!document.querySelector('#product').disabled);

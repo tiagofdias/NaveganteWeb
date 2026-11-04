@@ -76,6 +76,26 @@ class BridgeTests(unittest.TestCase):
             self.assertEqual(status,403)
             run.assert_not_called()
 
+    def test_pairing_requires_native_approval_and_exact_origin(self):
+        approved = []
+        self.server.bridge.approve = lambda: approved.append(True) or True
+        headers = {'Origin': self.origin, 'Content-Type':'application/json'}
+        status, _, body = self.request('POST','/api/pair',headers,'{"client":"navegante-web"}')
+        self.assertEqual(status,200)
+        self.assertEqual(json.loads(body)['token'],self.token)
+        self.assertEqual(len(approved),1)
+        headers['Origin']='https://evil.example'
+        self.assertEqual(self.request('POST','/api/pair',headers,'{"client":"navegante-web"}')[0],403)
+        self.assertEqual(len(approved),1)
+
+    def test_pairing_denial_and_legacy_bridge_never_disclose_token(self):
+        headers={'Origin':self.origin,'Content-Type':'application/json'}
+        for approve, expected in ((lambda:False,403),(None,409)):
+            self.server.bridge.approve=approve
+            status, _, body=self.request('POST','/api/pair',headers,'{"client":"navegante-web"}')
+            self.assertEqual(status,expected)
+            self.assertNotIn(self.token.encode(),body)
+
     def test_authenticated_operations_use_existing_local_service(self):
         with patch('server.APP.run',return_value={'example':True}) as run:
             status, _, body = self.request('POST','/api/read',self.paired(**{'Content-Type':'application/json'}),'{"reader":"TEST"}')

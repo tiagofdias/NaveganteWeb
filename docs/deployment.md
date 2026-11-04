@@ -6,14 +6,14 @@ O mesmo site serve todos os utilizadores. A Vercel distribui apenas quatro fiche
 
 ```text
 Navegador (site HTTPS na Vercel)
-        │ código temporário + origem HTTPS autorizada
+        │ aprovação na aplicação + origem HTTPS autorizada
         ▼
 127.0.0.1:8765 (server.py no PC do utilizador)
         ├── Windows PC/SC → leitor USB → cartão
         └── serviços oficiais de bilhética/pagamento
 ```
 
-Cada ponte aceita uma única origem HTTPS exata e gera um código aleatório por arranque. CORS, verificação de Host e o cabeçalho `X-Navegante-Token` são exigidos para acesso remoto. O código só fica na memória do processo e da página; não existe base de dados, cookie ou armazenamento no navegador. Uma visita ao site não faz pedidos à ponte antes do clique de ligação. Operações reais no serviço são serializadas para impedir submissões simultâneas.
+Cada aplicação aceita uma única origem HTTPS exata e gera uma credencial aleatória por arranque. A rota /api/pair só devolve essa credencial depois de aprovação explícita numa janela nativa; não são pedidos códigos ao utilizador. CORS, verificação de Host e o cabeçalho `X-Navegante-Token` são exigidos para acesso remoto. A credencial só fica na memória do processo e da página; não existe base de dados, cookie ou armazenamento no navegador. Uma visita ao site não faz pedidos à ponte antes do clique de ligação. Operações reais no serviço são serializadas para impedir submissões simultâneas.
 
 O utilizador tem de autorizar o acesso local/do dispositivo no navegador. A implementação usa `targetAddressSpace: 'loopback'` e pedidos CORS normais, sem desativar proteções do navegador. Referência: [Chrome — Local Network Access](https://developer.chrome.com/docs/modern-web-guidance/guides/security/local-network-access).
 
@@ -43,3 +43,9 @@ node tests/hosted-bridge.cjs
 Os testes do navegador usam Edge no Windows quando disponível. Também é possível definir `PLAYWRIGHT_BROWSER_EXECUTABLE` ou instalar o Chromium do Playwright com `npx playwright install chromium`. O teste `tests/browser.cjs` só faz uma leitura física se `NAVEGANTE_LIVE_READ=1` for definido explicitamente. Não inicia pagamentos nem gravações físicas.
 
 Os APKs, código descompilado, ferramentas de análise, arte abandonada, credenciais e ficheiros temporários não fazem parte do repositório ou do build público.
+
+## Aplicação Windows
+
+O executável portátil é criado em Windows com Python 3.13 e a versão fixada em requirements-build.txt. Para reproduzir: instalar as dependências de build e executar scripts/build-desktop.ps1. O ficheiro release/Navegante-Link.exe inclui Python e Tcl/Tk; não abre consola. O arranque normal nunca aceita automaticamente o emparelhamento. O parâmetro de teste --self-test verifica o runtime e o transporte numa porta efémera com origem fictícia, sem leituras ou gravações de cartões.
+
+A versão publicada ainda não está assinada digitalmente. A assinatura de editor continua pendente para distribuição final ao público; não se contornam proteções do sistema operativo.
