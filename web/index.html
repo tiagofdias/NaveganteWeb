@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#090b0d">
+  <meta name="description" content="Consulta e carrega o teu passe Navegante no computador, com o teu leitor de cartões.">
+  <title>Navegante Web · A tua próxima viagem</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/forms.css">
+  <script src="/app.js" defer></script>
+</head>
+<body data-stage="read">
+  <a class="skip-link" href="#main">Saltar para o conteúdo</a>
+  <aside class="sidebar" aria-label="Navegação principal">
+    <a class="brand" href="#start" aria-label="Navegante Web, início">
+      <span class="brand-symbol" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M9 29V12h6l10 17h6V12"/><path class="logo-arrow" d="M23 12h8v8"/></svg></span>
+      <span class="brand-wordmark">navegante<span class="brand-subtitle">WEB <i aria-hidden="true">/</i> LISBOA</span></span>
+    </a>
+    <p class="nav-caption">A TUA MOBILIDADE</p>
+    <nav>
+      <a class="nav-link active" href="#start" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18m-13 5h3"/></svg>Carregar passe<span class="nav-arrow" aria-hidden="true">↗</span></a>
+      <a class="nav-link" href="#recovery"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6m2-4v6l4 2"/></svg>Recuperar pedido</a>
+      <a class="nav-link" href="#help"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .6-1.5 1-1.5 2m0 3h.01"/></svg>Como funciona</a>
+      <button id="demo-toggle" class="demo-toggle secondary" type="button" aria-pressed="false">Experimentar demo</button>
+    </nav>
+    <div class="sidebar-bottom"><div class="route-art" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><p>Um cartão.<br><strong>Toda a cidade.</strong></p><span>Feito para seguir contigo.</span></div>
+    <div class="sidebar-foot"><span class="status-dot" aria-hidden="true"></span>Diretamente no teu computador</div>
+  </aside>
+
+  <div class="app-shell" id="start">
+    <header class="topbar"><span class="breadcrumb">A tua mobilidade <span aria-hidden="true">/</span> <strong>Carregar passe</strong></span><span class="local-badge"><span class="status-dot" aria-hidden="true"></span>Ligação local</span></header>
+    <section id="bridge-panel" class="bridge-panel" aria-label="Ligação ao leitor do teu PC" hidden>
+      <div class="bridge-heading"><div><p class="number">O SITE ONLINE. O LEITOR NO TEU PC.</p><h2>Liga o teu leitor.</h2></div><button id="bridge-disconnect" class="text-button" type="button" hidden>Desligar</button></div>
+      <details id="bridge-guide"><summary>Como ligar o site ao meu leitor?</summary><p>Com o leitor ligado, abre a pasta do projeto no teu PC e executa:</p><pre id="bridge-command"></pre><p>Mantém esse terminal aberto e copia o código de ligação apresentado. Quando o navegador pedir acesso à rede local, permite para este site.</p><a href="https://github.com/tiagofdias/NaveganteWeb#usar-o-site-online-com-o-leitor-usb" target="_blank" rel="noopener noreferrer">Ver instruções no GitHub ↗</a></details>
+      <form id="bridge-form"><label for="bridge-code">Código de ligação apresentado no terminal</label><div class="reader-row"><input id="bridge-code" type="password" autocomplete="off" spellcheck="false" maxlength="128" placeholder="Cola aqui o código temporário" required><button id="bridge-connect" type="submit">Ligar ao meu PC</button></div></form>
+      <p id="bridge-status" class="live-status" role="status" aria-live="polite"></p>
+    </section>
+    <aside id="demo-banner" class="demo-banner" aria-label="Modo demonstração" hidden><div><strong>DEMO · Tudo fictício.</strong><p>Experimenta sem leitor. Não há cobranças nem alterações em cartões reais.</p></div><button id="demo-reset" class="secondary" type="button">Reiniciar demo</button></aside>
+    <main id="main">
+      <section class="intro" id="intro"><div><p class="eyebrow"><span aria-hidden="true"></span>MAIS PERTO DA PRÓXIMA VIAGEM</p><h1 id="screen-title">O teu passe.<br>Sempre em <span class="highlight">movimento<svg viewBox="0 0 330 12" preserveAspectRatio="none" aria-hidden="true"><path d="M3 8Q160 0 327 6"/></svg></span>.</h1><p id="screen-description">Liga o leitor e insere o passe para começar.</p></div><div class="hero-stamp" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19 19 5M5 5h14v14"/></svg></div></section>
+
+      <ol class="journey" aria-label="Etapas do carregamento"><li class="current" data-step="read"><span>01</span>Ler o passe</li><li data-step="choose"><span>02</span>Escolher título</li><li data-step="pay"><span>03</span>Confirmar e pagar</li><li data-step="load"><span>04</span>Carregar e viajar</li></ol>
+
+      <div id="activity" class="activity" role="status" aria-live="polite" hidden><span aria-hidden="true"></span>A processar o pedido…</div>
+      <section id="card-context" class="card-context" aria-label="Cartão selecionado" hidden>
+        <div id="selected-card"></div>
+        <div id="recovered-identity" class="context-identity" hidden><span class="field-caption">O TEU PASSE</span><strong id="context-name"></strong><span id="context-number"></span><small id="context-contract"></small></div>
+        <div class="context-actions"><button id="toggle-reader" class="secondary" aria-controls="reader-workspace">Voltar ao início</button></div>
+      </section>
+      <section id="pass-status" class="pass-status" aria-label="Carregamento do passe" hidden><div><span class="field-caption">CARREGAMENTO NO CARTÃO</span><h2 id="pass-status-title"></h2><p id="pass-status-description"></p></div><div id="pass-titles" class="pass-titles"></div></section>
+      <section class="workspace" id="reader-workspace" aria-label="Leitura do cartão">
+        <div class="panel reader-panel"><div class="section-kicker"><span class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8m-8 4h8m-5 5h2"/></svg></span><span>VAMOS COMEÇAR</span><span class="step-tag">LEITOR</span></div><h2>A próxima paragem?<br>O teu leitor.</h2><p class="section-description">Liga o leitor ao computador e insere o teu passe Navegante.</p><div id="demo-scenario-field" hidden><label for="demo-scenario">Cartão de demonstração</label><select id="demo-scenario"><option value="empty">Sem passe mensal · Zapping 12,35 €</option><option value="valid">Metropolitano válido · Zapping 12,35 €</option><option value="expired">Passe expirado · Zapping 12,35 €</option></select></div><label for="reader">Leitor de cartões</label><div class="reader-row"><select id="reader"><option value="">A procurar leitores…</option></select><button id="refresh" class="icon-button" aria-label="Atualizar leitores" title="Atualizar leitores"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5m-4-4a8 8 0 0 1 13-3l2 3M4 16l2 3a8 8 0 0 0 13-3"/></svg></button></div><div class="actions reader-actions"><button id="read" disabled>Ler o meu passe <span aria-hidden="true">↗</span></button></div><p id="status" class="live-status" role="status" aria-live="polite">A iniciar…</p></div>
+        <div class="card-panel"><div class="card-panel-top"><span>O TEU COMPANHEIRO DE VIAGEM</span><span class="card-panel-dots" aria-hidden="true">•••</span></div><div class="pass-wrap"><div class="pass"><div class="pass-top"><span class="pass-brand">navegante<sup>®</sup></span><svg class="contactless" viewBox="0 0 24 28" aria-hidden="true"><path d="M5 10q4 4 0 8m5-12q8 8 0 16m5-20q12 12 0 24"/></svg></div><strong id="pass-name">Um cartão.<br>Infinitas possibilidades.</strong><div class="pass-bottom"><small id="pass-number">O TEU CARTÃO FÍSICO</small><span class="pass-mark">Lisboa.</span></div></div></div><div class="card-panel-bottom"><span class="little-card" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 10h4m-4 4h8"/></svg></span><p>O mesmo passe. Uma nova forma de carregar.</p></div></div>
+      </section>
+
+      <section id="result" class="panel result" hidden><div class="panel-heading"><div><p class="number">O TEU CARTÃO</p><h2 id="result-title">O teu passe.</h2></div><span class="subtle-badge">Leitura concluída</span></div><dl id="details" class="summary-details"></dl><details class="data-disclosure"><summary>Ver títulos, perfis e últimas utilizações<span aria-hidden="true">+</span></summary><div id="card-sections" class="card-sections"></div></details><details class="technical-disclosure"><summary>Diagnóstico da ligação</summary><pre id="technical"></pre></details></section>
+
+      <section id="catalog-panel" class="panel result" hidden><div class="panel-heading"><div><p class="number">02 / ESCOLHER CARREGAMENTO</p><h2>Escolhe o teu carregamento.</h2></div><span class="outline-icon" aria-hidden="true">↗</span></div><p class="section-description">Escolhe um título ou adiciona saldo ao teu passe.</p><button id="catalog-retry" class="secondary" hidden>Voltar a consultar produtos</button><label for="product">Título ou saldo</label><select id="product"><option value="">Seleciona um produto…</option></select><button id="other-passes" class="text-button" aria-controls="product" aria-expanded="false" hidden>Ver passes municipais / outros períodos</button><div id="product-options" hidden><div class="product-heading"><h3 id="product-name"></h3><span class="subtle-badge">Disponível para o teu cartão</span></div><label for="variant">Opção disponível</label><select id="variant"></select><div class="price-row"><div><span class="field-caption">TOTAL DO CARREGAMENTO</span><p class="price" id="price"></p></div><button id="prepare">Rever carregamento <span aria-hidden="true">→</span></button></div></div><p id="catalog-status" class="live-status" role="status" aria-live="polite"></p></section>
+
+      <section id="checkout-panel" class="panel result" hidden><div class="panel-heading"><div><p class="number">03 / CONFIRMAR E PAGAR</p><h2>Confirma e paga.</h2></div><span class="outline-icon" aria-hidden="true">✓</span></div><button id="back-products" class="text-button back-button">← Alterar carregamento</button><dl id="quote-details" class="quote-details"></dl><p class="notice"><span aria-hidden="true">i</span>Pagar e carregar são dois passos. Após o pagamento, grava o carregamento no passe e aguarda a confirmação.</p><form id="checkout-form"><div class="form-grid"><div><label for="receipt-email">E-mail para o recibo</label><input id="receipt-email" type="email" autocomplete="email" placeholder="nome@exemplo.pt" required></div><div><label for="nif">NIF <span class="optional">opcional</span></label><input id="nif" inputmode="numeric" maxlength="9" autocomplete="off" placeholder="Número de contribuinte"></div><div id="phone-field"><label for="phone">Número MB WAY</label><div class="phone-input"><span>+351</span><input id="phone" type="tel" inputmode="tel" autocomplete="tel-national" pattern="9[0-9]{8}" maxlength="9" placeholder="9XXXXXXXX"></div></div></div><label class="check"><input id="confirm-purchase" type="checkbox" required><span>Confirmo o título, a opção, o cartão e o valor apresentados acima.</span></label><button id="checkout" type="submit" disabled>Pedir pagamento</button></form><p id="checkout-status" class="live-status" role="status" aria-live="polite"></p></section>
+
+      <section id="payment-panel" class="panel result" hidden><div class="panel-heading"><div><p class="number">04 / CARREGAR E VIAJAR</p><h2 id="payment-title">A acompanhar o pedido.</h2></div><span class="payment-symbol" aria-hidden="true">↗</span></div><div class="reference-box"><span class="field-caption">REFERÊNCIA DA VENDA</span><strong id="sale-reference"></strong><p>Guarda esta referência para recuperares o pedido se fechares a página.</p></div><p id="payment-status" class="payment-status" role="status" aria-live="polite"></p><button id="poll" class="secondary">Atualizar estado do pedido <span aria-hidden="true">↻</span></button><div id="load-area" hidden><label class="check"><input id="confirm-write" type="checkbox"><span>O passe usado nesta compra está no leitor. Quero gravar o carregamento.</span></label><button id="load" disabled>Gravar carregamento no passe</button></div><div id="success" hidden><span class="success-mark" aria-hidden="true">✓</span><h3>Pronto para a próxima viagem.</h3><p>O serviço Navegante confirmou o carregamento. Podes retirar o passe do leitor.</p><button id="new-read" class="secondary">Consultar novamente o passe</button></div></section>
+
+      <section id="recovery" class="recovery-section"><details class="recovery-drawer"><summary><span class="recovery-icon" aria-hidden="true">↶</span><span><strong>Ficou um pedido por terminar?</strong><small>Recupera o carregamento com a referência da venda.</small></span><span class="disclosure-plus" aria-hidden="true">+</span></summary><div class="recovery-content"><form id="recover-form"><label for="recover-reference">Referência de venda</label><div class="reader-row"><input id="recover-reference" placeholder="Introduz a referência do teu pedido" required maxlength="100" autocomplete="off"><button id="recover" class="secondary" type="submit">Consultar pedido <span aria-hidden="true">→</span></button></div></form><p id="recover-status" class="live-status" role="status" aria-live="polite"></p></div></details></section>
+
+      <section id="help" class="help-section"><div><p class="number">SIMPLES, DO PRINCÍPIO AO FIM</p><h2>Menos filas.<br>Mais caminho.</h2></div><div class="help-points"><div><span>01</span><p><strong>Liga e lê.</strong> Insere o passe no leitor para consultar os dados e os títulos disponíveis.</p></div><div><span>02</span><p><strong>Escolhe e paga.</strong> Confirma o carregamento e aprova o pagamento no MB WAY.</p></div><div><span>03</span><p><strong>Carrega e segue.</strong> Grava o título no passe e aguarda a confirmação antes de o retirar.</p></div></div></section>
+      <footer><span><strong>navegante</strong> web<span class="footer-dot">·</span>Projeto independente, sem afiliação à TML.</span><span>Sem conta. Sem base de dados.</span></footer>
+    </main>
+  </div>
+</body>
+</html>

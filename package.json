@@ -1,0 +1,16 @@
+{
+  "name": "navegante-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Navegante web UI with a paired local PC/SC bridge and an isolated demo",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "python -m unittest discover -s tests"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "playwright": "1.64.1"
+  }
+}

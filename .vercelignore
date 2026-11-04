@@ -1,0 +1,11 @@
+**
+!package.json
+!package-lock.json
+!vercel.json
+!scripts
+!scripts/**
+!web
+!web/index.html
+!web/app.js
+!web/style.css
+!web/forms.css
