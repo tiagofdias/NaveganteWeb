@@ -24,6 +24,8 @@ O build público cria a homepage de download em `dist/index.html` e a demo em `d
 
 O percurso começa em «Carregar passe». A aplicação deteta o leitor, aguarda o cartão e avança automaticamente para os dados. Não consulta produtos até o utilizador escolher carregar um passe ou adicionar saldo. Com vários leitores, solicita uma escolha. Preço, confirmação MB WAY e gravação são passos distintos.
 
+A janela abre maximizada. A sondagem dos leitores é silenciosa e, quando há vários sem seleção, aguarda a escolha ou uma atualização explícita da lista. A revisão do produto usa o identificador do catálogo no endereço e o identificador interno oficial no corpo do pedido. `--review-check "nome exato do leitor"` permite testar explicitamente a revisão de 15 euros em Zapping, sem iniciar pagamento nem gravar o cartão.
+
 Requer Windows 10/11 x64, OpenGL 3.3, Internet e drivers do leitor. Não usa base de dados nem guarda dados do cartão em ficheiros. A referência pode ser copiada pelo utilizador para recuperar um pedido depois de reabrir. Bloqueia pagamentos duplicados e períodos já cobertos; só aceita gravações provenientes de autorização oficial assinada e impede repetir uma gravação de resultado incerto. Fechar durante uma operação é impedido; um pedido pendente exige guardar a referência antes de sair.
 
 O código da ponte emparelhada permanece para desenvolvimento avançado e regressão, mas não faz parte do percurso público atual. O antigo Navegante Link não é necessário.

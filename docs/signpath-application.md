@@ -13,7 +13,7 @@ Apply at https://signpath.org/apply. Suggested project details:
 | Source | https://github.com/tiagofdias/NaveganteWeb |
 | License | MIT — https://github.com/tiagofdias/NaveganteWeb/blob/main/LICENSE |
 | Homepage | https://navegante-web-xi.vercel.app/ |
-| Existing binary release | https://github.com/tiagofdias/NaveganteWeb/releases/tag/v2.1.0 |
+| Existing binary release | https://github.com/tiagofdias/NaveganteWeb/releases/tag/v2.1.1 |
 | Build workflow | https://github.com/tiagofdias/NaveganteWeb/actions/workflows/native-windows.yml |
 | Code signing policy | https://github.com/tiagofdias/NaveganteWeb/blob/main/docs/code-signing-policy.md |
 | Privacy policy | https://github.com/tiagofdias/NaveganteWeb/blob/main/docs/privacy.md |
