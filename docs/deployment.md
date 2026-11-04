@@ -1,8 +1,9 @@
-﻿# Publicação da demo e aplicação Windows
+# Publicação da demo e aplicação Windows
 
 ## Experiência pública
 
-- O site https://navegante-web-xi.vercel.app inicia automaticamente uma demo com dados fictícios.
+- A homepage https://navegante-web-xi.vercel.app apresenta a aplicação desktop e dá prioridade ao download. Não carrega o runtime da demo.
+- A demo opcional em https://navegante-web-xi.vercel.app/demo/ inicia automaticamente a simulação com dados fictícios.
 - O site não procura leitores, não inicia pagamentos e não grava cartões reais.
 - A página explica como descarregar a aplicação Windows e usar o mesmo percurso com um cartão real.
 - A aplicação é o mesmo HTML, CSS e JavaScript, apresentado numa janela própria do Microsoft Edge. Não é um conector que obrigue a voltar ao site.
@@ -19,7 +20,7 @@ Navegante-Web.exe (Windows)
        └── serviços oficiais de bilhética/pagamento
 ```
 
-O build público ativa `data-hosted-demo="true"`. A função de pedidos bloqueia operações reais nesse modo e a CSP usa `connect-src 'none'`. Não existe opção de sair para um modo real na Vercel. Não são publicados backends Python ou segredos na cloud.
+O build público cria a homepage de download em `dist/index.html` e a demo em `dist/demo/index.html`, onde ativa `data-hosted-demo="true"`. A função de pedidos bloqueia operações reais nesse modo e a CSP usa `connect-src 'none'`. Não existe opção de sair para um modo real na Vercel. Não são publicados backends Python ou segredos na cloud.
 
 O executável contém Python e os quatro ficheiros da interface. Requer Windows 64 bits, Microsoft Edge e drivers do leitor. Abre o Edge em modo de aplicação, com um perfil temporário próprio, sem usar o perfil pessoal do utilizador. O servidor local usa uma porta livre e não aceita origens remotas. Ao fechar a janela, espera por uma operação de cartão em curso antes de terminar o serviço. Não usa base de dados própria nem guarda sessões de cartões em ficheiros.
 
@@ -50,6 +51,7 @@ Resultado: `release/Navegante-Web.exe`. A versão de PyInstaller está fixada em
 ```powershell
 python -m unittest discover -s tests
 npm run build
+node tests/homepage.cjs
 node tests/hosted-demo.cjs
 node tests/demo.cjs
 node tests/browser.cjs

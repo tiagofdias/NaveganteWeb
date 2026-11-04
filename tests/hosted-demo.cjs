@@ -9,13 +9,13 @@ const assert=require('node:assert/strict');
     const errors=[];page.on('pageerror',error=>errors.push(error.message));
     await page.addInitScript(()=>{window.fetchAttempts=0;window.fetch=()=>{window.fetchAttempts++;throw Error('Network forbidden in hosted demo test');};});
     await page.route('https://navegante-demo.test/**',async route=>{
-      const file=new URL(route.request().url()).pathname.slice(1)||'index.html';
-      assert.ok(['index.html','app.js','style.css','forms.css'].includes(file));
+      const file=new URL(route.request().url()).pathname.slice(1).replace(/\/$/,'/index.html')||'index.html';
+      assert.ok(['index.html','demo/index.html','app.js','style.css','forms.css'].includes(file));
       await route.fulfill({contentType:file.endsWith('.css')?'text/css':file.endsWith('.js')?'text/javascript':'text/html',
         headers:{'Content-Security-Policy':"default-src 'self'; connect-src 'none'; base-uri 'self'; form-action 'self'"},
         body:fs.readFileSync(path.join(__dirname,'..','dist',file))});
     });
-    await page.goto('https://navegante-demo.test');
+    await page.goto('https://navegante-demo.test/demo/');
     await page.waitForFunction(()=>!document.querySelector('#read').disabled);
     assert.equal(await page.locator('#demo-banner').isVisible(),true);
     assert.equal(await page.locator('#demo-toggle').isVisible(),false);

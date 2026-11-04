@@ -6,7 +6,7 @@ Demo online e aplicação Windows para consultar e carregar um passe Navegante c
 
 ## Usar a aplicação Windows
 
-O site público é **apenas uma demo**. Não contacta leitores, não cobra pagamentos e não carrega cartões reais.
+A homepage dá destaque ao download da aplicação Windows. A [demo opcional](https://navegante-web-xi.vercel.app/demo/) fica numa página separada e não contacta leitores, não cobra pagamentos nem carrega cartões reais.
 
 A aplicação Windows tem **exatamente a mesma interface**, com acesso ao leitor real:
 
@@ -53,7 +53,7 @@ Verificação de isolamento e fluxo completo: `npm ci` e `node tests/demo.cjs` (
 
 ## Publicar a interface
 
-`npm run build` prepara apenas a interface estática em `dist/`, configurada por `vercel.json` para a Vercel. A publicação é exclusivamente demonstrativa: inicia a demo automaticamente e bloqueia operações reais. Para cartões físicos, distribui-se a mesma interface no executável Windows. Ver [arquitetura, limites do Hobby e testes](docs/deployment.md).
+`npm run build` prepara apenas a interface estática em `dist/`, configurada por `vercel.json` para a Vercel. A homepage é uma página estática de apresentação e download; a demo em `/demo/` inicia automaticamente a simulação e bloqueia operações reais. Para cartões físicos, distribui-se a mesma interface no executável Windows. Ver [arquitetura, limites do Hobby e testes](docs/deployment.md).
 
 ## O que foi efetivamente validado
 
