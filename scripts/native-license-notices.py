@@ -75,6 +75,8 @@ def main():
     parser.add_argument('--output', type=Path, default=ROOT / 'release')
     args = parser.parse_args()
     report, sections = collect(args.target)
+    for file in sorted((ROOT / 'native/assets/fonts').glob('*-OFL.txt')):
+        sections.append('=' * 72 + '\nBundled UI font: ' + file.name + '\n' + file.read_text(encoding='utf-8'))
     args.output.mkdir(parents=True, exist_ok=True)
     heading = ('Third-party dependency notices for Navegante Desktop\n'
                'Original project code is MIT licensed; dependencies retain their own licenses.\n'
