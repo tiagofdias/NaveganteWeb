@@ -10,7 +10,7 @@ O site público é **apenas uma demo**. Não contacta leitores, não cobra pagam
 
 A aplicação Windows tem **exatamente a mesma interface**, com acesso ao leitor real:
 
-1. [Descarregar o Navegante-Web.exe](https://github.com/tiagofdias/NaveganteWeb/releases/download/v1.2.0/Navegante-Web.exe) e abrir o ficheiro.
+1. [Descarregar o Navegante-Web.exe](https://github.com/tiagofdias/NaveganteWeb/releases/download/v1.2.1/Navegante-Web.exe) e abrir o ficheiro.
 2. A página abre numa janela própria. Ligar um leitor PC/SC compatível e inserir o cartão.
 3. Escolher **Ler o meu passe**, selecionar o título ou saldo e seguir os passos apresentados.
 4. Confirmar o pagamento quando necessário e gravar o carregamento. Aguardar a confirmação antes de retirar o cartão.

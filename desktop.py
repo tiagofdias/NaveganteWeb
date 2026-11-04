@@ -10,6 +10,8 @@ from tkinter import messagebox
 from http.client import HTTPConnection
 from http.server import ThreadingHTTPServer
 import json
+import ctypes
+import time
 import server
 from bridge import BridgeAccess
 
@@ -24,6 +26,25 @@ def edge_path():
             if candidate.is_file():
                 return candidate
     raise RuntimeError('O Microsoft Edge não foi encontrado. Esta versão da aplicação necessita do Edge instalado no Windows.')
+
+def has_app_window(pid):
+    visible = []
+    callback_type = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+    def visit(handle, _):
+        process_id = ctypes.c_ulong()
+        ctypes.windll.user32.GetWindowThreadProcessId(ctypes.c_void_p(handle), ctypes.byref(process_id))
+        if process_id.value == pid and ctypes.windll.user32.IsWindowVisible(ctypes.c_void_p(handle)):
+            name = ctypes.create_unicode_buffer(128)
+            ctypes.windll.user32.GetClassNameW(ctypes.c_void_p(handle), name, len(name))
+            if name.value == 'Chrome_WidgetWin_1':
+                title = ctypes.create_unicode_buffer(512)
+                ctypes.windll.user32.GetWindowTextW(ctypes.c_void_p(handle), title, len(title))
+                if title.value.startswith(('Navegante Web', '127.0.0.1')):
+                    visible.append(True)
+        return True
+    callback = callback_type(visit)
+    ctypes.windll.user32.EnumWindows(callback, 0)
+    return bool(visible)
 
 def main():
     executable = edge_path()
@@ -40,12 +61,22 @@ def main():
             child = subprocess.Popen([str(executable),
                 f'--app=http://{server.HOST}:{http.server_port}',
                 '--user-data-dir='+str(resolved), '--no-first-run', '--no-default-browser-check',
-                '--disable-background-mode', '--window-size=1280,900'],
-                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
-            child.wait()
+                '--disable-background-mode', '--disable-extensions', '--window-size=1280,900'],
+                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0),
+                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            deadline = time.monotonic()+30
+            while child.poll() is None and not has_app_window(child.pid) and time.monotonic()<deadline:
+                time.sleep(.2)
+            while child.poll() is None and has_app_window(child.pid):
+                time.sleep(.25)
             # Let an in-progress card operation finish if the window was closed.
             with server.APP_LOCK:
                 pass
+            # Edge can keep a background process after its last window closes.
+            # Terminate only this app's own dedicated browser process.
+            if child.poll() is None:
+                child.terminate()
+                child.wait(timeout=10)
     finally:
         http.shutdown()
         http.server_close()
