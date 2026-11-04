@@ -195,6 +195,14 @@ impl App {
         let state = self.purchase["state"].as_str().unwrap_or("");
         !state.is_empty() && state != "loaded"
     }
+    fn go_home(&mut self) {
+        if self.busy {
+            return;
+        }
+        self.detection_epoch = self.detection_epoch.wrapping_add(1);
+        self.step = Step::Home;
+        self.error.clear();
+    }
     fn should_probe(&self) -> bool {
         self.step == Step::Detect
             && !self.busy
@@ -312,6 +320,24 @@ impl App {
         design::panel(ui, render);
     }
     fn home(&mut self, ui: &mut egui::Ui) {
+        if self.active_purchase() {
+            Self::title(
+                ui,
+                "O TEU PEDIDO",
+                "Tens um carregamento por concluir.",
+                "Retoma o pedido existente para acompanhar o pagamento e concluir a gravação.",
+            );
+            Self::panel(ui, |ui| {
+                ui.label(format!(
+                    "Referência: {}",
+                    model::text(&self.purchase["saleId"])
+                ));
+                if Self::primary(ui, "Retomar pedido") {
+                    self.step = Step::Payment;
+                }
+            });
+            return;
+        }
         let wide = ui.available_width() > 830.;
         ui.add_space(if wide { 38. } else { 6. });
         let mut hero = |ui: &mut egui::Ui| {
@@ -920,11 +946,17 @@ impl App {
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.receive();
-        if ctx.input(|i| i.viewport().close_requested()) && !self.allow_close {
+        let fullscreen = ctx.input(|i| i.viewport().fullscreen.unwrap_or(true));
+        if ctx.input(|i| i.key_pressed(egui::Key::F11)) {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(!fullscreen));
+        } else if fullscreen && ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(false));
+        }
+        if ctx.input(|i| i.viewport().close_requested()) {
             if self.busy {
                 ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
                 self.error = "Aguarda que a operação termine antes de fechar a aplicação.".into();
-            } else if self.active_purchase() {
+            } else if !self.allow_close && self.active_purchase() {
                 ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
                 self.close_dialog = true;
             }
@@ -962,17 +994,45 @@ impl eframe::App for App {
                         );
                     });
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        design::pill(
-                            ui,
-                            if self.demo {
-                                "DEMONSTRAÇÃO · SEM COBRANÇAS"
-                            } else if !self.card.is_null() {
-                                "CARTÃO LIDO"
+                        if ui
+                            .add_enabled(!self.busy, egui::Button::new("Fechar").small())
+                            .clicked()
+                        {
+                            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                        }
+                        if ui
+                            .small_button(if fullscreen {
+                                "Janela"
                             } else {
-                                "PRONTO PARA COMEÇAR"
-                            },
-                            self.demo || !self.card.is_null(),
-                        );
+                                "Ecrã inteiro"
+                            })
+                            .on_hover_text("F11 alterna o ecrã inteiro. Esc regressa à janela.")
+                            .clicked()
+                        {
+                            ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(!fullscreen));
+                        }
+                        if ui
+                            .add_enabled(
+                                !self.busy && self.step != Step::Home,
+                                egui::Button::new("Voltar ao início"),
+                            )
+                            .clicked()
+                        {
+                            self.go_home();
+                        }
+                        if ctx.content_rect().width() > 1100. {
+                            design::pill(
+                                ui,
+                                if self.demo {
+                                    "DEMONSTRAÇÃO · SEM COBRANÇAS"
+                                } else if !self.card.is_null() {
+                                    "CARTÃO LIDO"
+                                } else {
+                                    "PRONTO PARA COMEÇAR"
+                                },
+                                self.demo || !self.card.is_null(),
+                            );
+                        }
                     });
                 });
             });
@@ -985,14 +1045,6 @@ impl eframe::App for App {
                             .color(MUTED)
                             .size(11.),
                     );
-                    if !self.busy
-                        && !self.active_purchase()
-                        && self.step != Step::Home
-                        && ui.small_button("Início").clicked()
-                    {
-                        self.step = Step::Home;
-                        self.error.clear();
-                    }
                 });
             });
         let stage = match self.step {
@@ -1074,7 +1126,7 @@ impl eframe::App for App {
                     ui.label("Guarda a referência para recuperar este pedido. O pagamento não é cancelado ao fechar.");
                     ui.label(model::text(&self.purchase["saleId"]));
                     if ui.button("Continuar na aplicação").clicked() { self.close_dialog=false; }
-                    if ui.button("Guardei a referência. Fechar").clicked() {
+                    if ui.add_enabled(!self.busy,egui::Button::new("Guardei a referência. Fechar")).clicked() {
                         self.allow_close=true;
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
@@ -1191,6 +1243,25 @@ mod detection_tests {
         reply(&mut app, &replies, "", false, epoch);
         assert!(app.error.is_empty());
         assert!(!app.probe_failed);
+    }
+    #[test]
+    fn home_keeps_unfinished_purchase_for_resume() {
+        let (mut app, _commands, _replies) = app();
+        app.step = Step::Payment;
+        app.purchase = json!({"saleId":"test-sale","state":"paid","canLoad":true});
+        app.go_home();
+        assert_eq!(app.step, Step::Home);
+        assert_eq!(app.purchase["saleId"], "test-sale");
+        assert!(app.active_purchase());
+        assert_eq!(app.purchase["canLoad"], true);
+    }
+    #[test]
+    fn home_cannot_interrupt_card_operations() {
+        let (mut app, _commands, _replies) = app();
+        app.step = Step::Reading;
+        app.busy = true;
+        app.go_home();
+        assert_eq!(app.step, Step::Reading);
     }
 }
 #[derive(Default)]
@@ -1346,8 +1417,7 @@ fn main() -> eframe::Result {
     };
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([1160., 850.])
-            .with_maximized(true)
+            .with_fullscreen(true)
             .with_min_inner_size([760., 640.])
             .with_icon(icon),
         renderer: eframe::Renderer::Glow,

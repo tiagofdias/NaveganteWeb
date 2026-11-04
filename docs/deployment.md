@@ -24,7 +24,9 @@ O build público cria a homepage de download em `dist/index.html` e a demo em `d
 
 O percurso começa em «Carregar passe». A aplicação deteta o leitor, aguarda o cartão e avança automaticamente para os dados. Não consulta produtos até o utilizador escolher carregar um passe ou adicionar saldo. Com vários leitores, solicita uma escolha. Preço, confirmação MB WAY e gravação são passos distintos.
 
-A janela abre maximizada. A sondagem dos leitores é silenciosa e, quando há vários sem seleção, aguarda a escolha ou uma atualização explícita da lista. A revisão do produto usa o identificador do catálogo no endereço e o identificador interno oficial no corpo do pedido. `--review-check "nome exato do leitor"` permite testar explicitamente a revisão de 15 euros em Zapping, sem iniciar pagamento nem gravar o cartão.
+A janela abre em ecrã inteiro real, sem moldura do Windows. F11 alterna o modo; Esc ou o botão «Janela» regressam à janela normal. Os controlos «Voltar ao início» e «Fechar» ficam fixos no topo. Voltar ao início preserva um pedido pendente e apresenta a opção de o retomar. Operações em curso não são interrompidas.
+
+A sondagem dos leitores é silenciosa e, quando há vários sem seleção, aguarda a escolha ou uma atualização explícita da lista. A revisão do produto usa o identificador do catálogo no endereço e o identificador interno oficial no corpo do pedido. `--review-check "nome exato do leitor"` permite testar explicitamente a revisão de 15 euros em Zapping, sem iniciar pagamento nem gravar o cartão.
 
 Requer Windows 10/11 x64, OpenGL 3.3, Internet e drivers do leitor. Não usa base de dados nem guarda dados do cartão em ficheiros. A referência pode ser copiada pelo utilizador para recuperar um pedido depois de reabrir. Bloqueia pagamentos duplicados e períodos já cobertos; só aceita gravações provenientes de autorização oficial assinada e impede repetir uma gravação de resultado incerto. Fechar durante uma operação é impedido; um pedido pendente exige guardar a referência antes de sair.
 
@@ -57,6 +59,7 @@ Resultado: `release/Navegante-Web.exe`, portátil. `native/Cargo.lock` fixa as d
 python -m unittest discover -s tests
 cargo test --locked --manifest-path native/Cargo.toml
 powershell -NoProfile -File tests/native-ui.ps1 -Executable release/Navegante-Web.exe
+powershell -NoProfile -File tests/native-window.ps1 -Executable release/Navegante-Web.exe
 $env:NAVEGANTE_TEST_WAIT_DEVICES='1'
 powershell -NoProfile -File tests/native-ui.ps1 -Executable release/Navegante-Web.exe
 npm run build
