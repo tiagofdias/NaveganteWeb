@@ -18,7 +18,7 @@ const assert=require('node:assert/strict');
     await page.goto('https://navegante-home.test');
     assert.equal(await page.locator('script').count(),0,'Homepage does not load the demo runtime');
     assert.equal(await page.locator('#read').count(),0,'Reader workflow is not the homepage');
-    assert.match(await page.locator('#download-desktop').getAttribute('href'),/v2\.1\.1\/Navegante-Web\.exe$/);
+    assert.match(await page.locator('#download-desktop').getAttribute('href'),/v2\.1\.2\/Navegante-Web\.exe$/);
     for(const width of [1440,1024,768,390,360]){
       await page.setViewportSize({width,height:1000});
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'Overflow at '+width);
