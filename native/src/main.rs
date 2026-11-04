@@ -545,27 +545,36 @@ impl App {
                         });
                         if !self.readers.is_empty() {
                             let previous_reader = self.reader.clone();
-                            egui::ComboBox::from_id_salt("reader")
-                                .selected_text(if self.reader.is_empty() {
-                                    "Selecionar leitor"
-                                } else {
-                                    &self.reader
-                                })
-                                .width(320.)
-                                .show_ui(ui, |ui| {
-                                    for reader in &self.readers {
-                                        ui.selectable_value(
-                                            &mut self.reader,
-                                            reader.clone(),
-                                            reader,
-                                        );
-                                    }
-                                });
+                            ui.horizontal(|ui| {
+                                ui.spacing_mut().interact_size.y = 44.;
+                                ui.spacing_mut().button_padding.y = 10.;
+                                ui.spacing_mut().item_spacing.x = 10.;
+                                egui::ComboBox::from_id_salt("reader")
+                                    .selected_text(if self.reader.is_empty() {
+                                        "Selecionar leitor"
+                                    } else {
+                                        &self.reader
+                                    })
+                                    .width(320.)
+                                    .show_ui(ui, |ui| {
+                                        for reader in &self.readers {
+                                            ui.selectable_value(
+                                                &mut self.reader,
+                                                reader.clone(),
+                                                reader,
+                                            );
+                                        }
+                                    });
+                                if ui
+                                    .add_enabled_ui(!self.probe_pending, design::refresh_control)
+                                    .inner
+                                    .clicked()
+                                {
+                                    self.send(Command::Probe(self.reader.clone()));
+                                }
+                            });
                             if self.reader != previous_reader {
                                 self.last_probe = Instant::now() - Duration::from_secs(2);
-                            }
-                            if ui.small_button("Atualizar lista").clicked() {
-                                self.send(Command::Probe(self.reader.clone()));
                             }
                         }
                         if self.busy {
@@ -575,9 +584,6 @@ impl App {
                 });
                 if !self.error.is_empty() && Self::primary(ui, "Tentar novamente") {
                     self.start();
-                }
-                if ui.button("Voltar ao início").clicked() {
-                    self.step = Step::Home;
                 }
             }
             Step::Summary => {

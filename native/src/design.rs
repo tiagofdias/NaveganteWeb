@@ -212,6 +212,58 @@ pub fn header_control(ui: &mut egui::Ui, label: &str, control: HeaderControl) ->
     }
     response.on_hover_text(label)
 }
+pub fn refresh_control(ui: &mut egui::Ui) -> egui::Response {
+    let (rect, response) = ui.allocate_exact_size(Vec2::splat(44.), egui::Sense::click());
+    response.widget_info(|| {
+        egui::WidgetInfo::labeled(
+            egui::WidgetType::Button,
+            ui.is_enabled(),
+            "Atualizar leitores",
+        )
+    });
+    let hover = ui.is_enabled() && response.hovered();
+    let color = if !ui.is_enabled() {
+        MUTED.gamma_multiply(0.45)
+    } else if hover {
+        YELLOW
+    } else {
+        MUTED
+    };
+    let p = ui.painter();
+    p.rect_filled(
+        rect,
+        12.,
+        if hover {
+            Color32::from_rgb(29, 39, 49)
+        } else {
+            Color32::from_rgb(22, 30, 40)
+        },
+    );
+    p.rect_stroke(
+        rect,
+        12.,
+        Stroke::new(1_f32, if response.has_focus() { YELLOW } else { LINE }),
+        egui::StrokeKind::Inside,
+    );
+    let center = rect.center();
+    let radius = 7.;
+    let points: Vec<_> = (0..=30)
+        .map(|i| {
+            let a = -0.55 + i as f32 / 30. * 4.9;
+            center + Vec2::new(a.cos(), a.sin()) * radius
+        })
+        .collect();
+    p.add(egui::Shape::line(points, Stroke::new(1.6_f32, color)));
+    let tip = center + Vec2::new((-0.55_f32).cos(), (-0.55_f32).sin()) * radius;
+    p.add(egui::Shape::line(
+        vec![tip + Vec2::new(-4.5, -1.), tip, tip + Vec2::new(0.5, -4.5)],
+        Stroke::new(1.6_f32, color),
+    ));
+    if hover {
+        ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+    }
+    response.on_hover_text("Atualizar leitores")
+}
 pub fn title(ui: &mut egui::Ui, kicker: &str, title: &str, sub: &str) {
     eyebrow(ui, kicker);
     ui.add_space(10.);
