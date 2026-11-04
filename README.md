@@ -2,20 +2,22 @@
 
 Aplicação web local para consultar e carregar um passe Navegante com um leitor USB PC/SC, sem base de dados própria. Projeto independente, sem afiliação à TML.
 
+**Site público:** https://navegante-web-xi.vercel.app · **Repositório:** https://github.com/tiagofdias/NaveganteWeb
+
 ## Usar o site online com o leitor USB
 
 O site pode ser usado por qualquer pessoa com **Windows, Python 3.13 e um leitor PC/SC compatível**. Cada pessoa usa o seu próprio cartão e uma ponte no seu próprio PC; não existe uma conta de proprietário a limitar o acesso.
 
 1. Descarregar este repositório em **Code → Download ZIP** e extrair a pasta.
 2. Ligar o leitor e abrir `start-bridge.cmd`. Se o comando `python` não existir, instalar Python e ativar a opção de o adicionar ao PATH.
-3. Colar no terminal o endereço HTTPS do site que se pretende autorizar. A ponte apresenta um código temporário; manter o terminal aberto.
+3. Premir Enter para autorizar o site público (ou colar outra origem HTTPS). A ponte apresenta um código temporário; manter o terminal aberto.
 4. No site, colar esse código em **Ligar ao meu PC** e permitir o acesso local/do dispositivo quando o navegador pedir.
 5. Inserir o cartão, ler, escolher o carregamento e seguir os passos de pagamento e gravação.
 
 Alternativa pelo terminal:
 
 ```powershell
-python server.py --web-origin https://ENDERECO-DO-SITE.vercel.app
+python server.py --web-origin https://navegante-web-xi.vercel.app
 ```
 
 O domínio deve coincidir exatamente com o endereço aberto no navegador. Não são aceites wildcards nem outros sites. O código muda a cada arranque, só fica em memória e não é enviado para a Vercel. A ponte escuta apenas em `127.0.0.1:8765` e conserva as operações de cartão e bilhética no PC do utilizador. As operações reais continuam a depender dos serviços oficiais e da elegibilidade de cada cartão.

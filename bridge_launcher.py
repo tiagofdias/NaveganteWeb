@@ -3,11 +3,14 @@ import runpy
 import sys
 from bridge import BridgeAccess
 
+DEFAULT_ORIGIN = 'https://navegante-web-xi.vercel.app'
+
 if __name__ == '__main__':
     print('Navegante Web - ligar o site ao leitor deste PC')
-    print('Copia o endereço HTTPS do site, sem caminhos adicionais.')
+    print('Site público: '+DEFAULT_ORIGIN)
+    print('Prime Enter para usar este site, ou cola outra origem HTTPS autorizada.')
     try:
-        origin = input('Endereço do site: ').strip()
+        origin = input('Endereço do site [Enter = site público]: ').strip() or DEFAULT_ORIGIN
         BridgeAccess(origin)
         if not origin:
             raise ValueError('Indica o endereço do site para autorizar a ligação.')
