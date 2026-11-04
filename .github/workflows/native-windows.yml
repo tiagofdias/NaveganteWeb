@@ -1,0 +1,135 @@
+name: Native Windows build and signing
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - native/**
+      - desktop-assets/**
+      - scripts/**
+      - tests/signing.ps1
+      - LICENSE
+      - .github/workflows/native-windows.yml
+  pull_request:
+    paths:
+      - native/**
+      - desktop-assets/**
+      - scripts/**
+      - LICENSE
+      - .github/workflows/native-windows.yml
+  workflow_dispatch:
+    inputs:
+      sign:
+        description: Request signing after SignPath approval and configuration
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  native:
+    runs-on: windows-2025
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Check signing prerequisites
+        if: github.event_name == 'workflow_dispatch' && inputs.sign
+        env:
+          REQUEST_REF: ${{ github.ref }}
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          SIGNPATH_ORGANIZATION_ID: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          SIGNPATH_PROJECT_SLUG: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          SIGNPATH_SIGNING_POLICY_SLUG: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          SIGNPATH_CERTIFICATE_THUMBPRINT: ${{ vars.SIGNPATH_CERTIFICATE_THUMBPRINT }}
+        run: |
+          if ($env:REQUEST_REF -ne 'refs/heads/main') { throw 'Signing is restricted to main.' }
+          foreach ($name in @('SIGNPATH_API_TOKEN','SIGNPATH_ORGANIZATION_ID','SIGNPATH_PROJECT_SLUG','SIGNPATH_SIGNING_POLICY_SLUG','SIGNPATH_CERTIFICATE_THUMBPRINT')) {
+            if (-not [Environment]::GetEnvironmentVariable($name)) {
+              throw "Configure $name only after SignPath has approved the project."
+            }
+          }
+
+      - name: Install pinned Rust toolchain
+        run: |
+          rustup toolchain install 1.99.1 --profile minimal --component rustfmt --component clippy
+          if ($LASTEXITCODE -ne 0) { throw 'Rust installation failed.' }
+          rustup default 1.99.1
+          if ($LASTEXITCODE -ne 0) { throw 'Rust selection failed.' }
+
+      - name: Check formatting and financial/protocol tests
+        run: |
+          cargo fmt --manifest-path native/Cargo.toml --check
+          if ($LASTEXITCODE -ne 0) { throw 'Formatting check failed.' }
+          cargo test --locked --manifest-path native/Cargo.toml
+          if ($LASTEXITCODE -ne 0) { throw 'Rust tests failed.' }
+          cargo clippy --locked --manifest-path native/Cargo.toml --all-targets -- -D warnings
+          if ($LASTEXITCODE -ne 0) { throw 'Clippy failed.' }
+
+      - name: Build native Windows executable
+        run: |
+          ./scripts/build-desktop.ps1
+          Copy-Item LICENSE release/LICENSE
+          python scripts/native-license-notices.py
+          if ($LASTEXITCODE -ne 0) { throw 'Dependency license inventory failed.' }
+          $digest = (Get-FileHash release/Navegante-Web.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          [IO.File]::WriteAllText("$PWD/release/SHA256SUMS.txt", "$digest  Navegante-Web.exe`n", [Text.Encoding]::ASCII)
+
+      - name: Upload unsigned build for provenance
+        id: unsigned
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: native-windows-unsigned
+          path: |
+            release/Navegante-Web.exe
+            release/LICENSE
+            release/THIRD-PARTY-NOTICES.txt
+          if-no-files-found: error
+          retention-days: 14
+
+      # SignPath's service requires a maintainer to approve each release. A
+      # successful build alone must never imply authorization to sign it.
+      - name: Request SignPath signing
+        if: github.event_name == 'workflow_dispatch' && inputs.sign
+        uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: '900'
+          output-artifact-directory: release/signed
+
+      - name: Verify signed result and generate its checksum
+        if: github.event_name == 'workflow_dispatch' && inputs.sign
+        env:
+          EXPECTED_CERTIFICATE: ${{ vars.SIGNPATH_CERTIFICATE_THUMBPRINT }}
+        run: |
+          ./scripts/verify-desktop-signature.ps1 -Executable release/signed/Navegante-Web.exe -CertificateThumbprint $env:EXPECTED_CERTIFICATE
+          Copy-Item LICENSE release/signed/LICENSE -Force
+          $digest = (Get-FileHash release/signed/Navegante-Web.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          [IO.File]::WriteAllText("$PWD/release/signed/SHA256SUMS.txt", "$digest  Navegante-Web.exe`n", [Text.Encoding]::ASCII)
+
+      - name: Upload verified signed download
+        if: github.event_name == 'workflow_dispatch' && inputs.sign
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: native-windows-signed
+          path: |
+            release/signed/Navegante-Web.exe
+            release/signed/SHA256SUMS.txt
+            release/signed/LICENSE
+            release/signed/THIRD-PARTY-NOTICES.txt
+          if-no-files-found: error
+          retention-days: 14

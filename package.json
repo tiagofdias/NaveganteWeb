@@ -2,6 +2,7 @@
   "name": "navegante-web",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "description": "Navegante web UI with a paired local PC/SC bridge and an isolated demo",
   "scripts": {
     "build": "node scripts/build.mjs",

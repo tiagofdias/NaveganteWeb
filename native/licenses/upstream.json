@@ -1,0 +1,140 @@
+{
+  "accesskit": [
+    {
+      "file": "licenses/accesskit-0b6901a8c8/LICENSE-MIT",
+      "source": "https://raw.githubusercontent.com/AccessKit/accesskit/0b6901a8c8e6fb1cb5a2dc7c19dc7bee1cc5ad09/LICENSE-MIT"
+    },
+    {
+      "file": "licenses/accesskit-0b6901a8c8/LICENSE-APACHE",
+      "source": "https://raw.githubusercontent.com/AccessKit/accesskit/0b6901a8c8e6fb1cb5a2dc7c19dc7bee1cc5ad09/LICENSE-APACHE"
+    }
+  ],
+  "accesskit_consumer": [
+    {
+      "file": "licenses/accesskit-5801c4a49f/LICENSE-MIT",
+      "source": "https://raw.githubusercontent.com/AccessKit/accesskit/5801c4a49ff9b2c9ec3f77b3c31272d0da4c5cd3/LICENSE-MIT"
+    },
+    {
+      "file": "licenses/accesskit-5801c4a49f/LICENSE-APACHE",
+      "source": "https://raw.githubusercontent.com/AccessKit/accesskit/5801c4a49ff9b2c9ec3f77b3c31272d0da4c5cd3/LICENSE-APACHE"
+    }
+  ],
+  "accesskit_windows": [
+    {
+      "file": "licenses/accesskit-5801c4a49f/LICENSE-MIT",
+      "source": "https://raw.githubusercontent.com/AccessKit/accesskit/5801c4a49ff9b2c9ec3f77b3c31272d0da4c5cd3/LICENSE-MIT"
+    },
+    {
+      "file": "licenses/accesskit-5801c4a49f/LICENSE-APACHE",
+      "source": "https://raw.githubusercontent.com/AccessKit/accesskit/5801c4a49ff9b2c9ec3f77b3c31272d0da4c5cd3/LICENSE-APACHE"
+    }
+  ],
+  "accesskit_winit": [
+    {
+      "file": "licenses/accesskit-5801c4a49f/LICENSE-MIT",
+      "source": "https://raw.githubusercontent.com/AccessKit/accesskit/5801c4a49ff9b2c9ec3f77b3c31272d0da4c5cd3/LICENSE-MIT"
+    },
+    {
+      "file": "licenses/accesskit-5801c4a49f/LICENSE-APACHE",
+      "source": "https://raw.githubusercontent.com/AccessKit/accesskit/5801c4a49ff9b2c9ec3f77b3c31272d0da4c5cd3/LICENSE-APACHE"
+    }
+  ],
+  "clipboard-win": [
+    {
+      "file": "licenses/clipboard-win-ed27008ae5/LICENSE",
+      "source": "https://raw.githubusercontent.com/DoumanAsh/clipboard-win/ed27008ae5d1f10cfbb266de039f0fb35fd05a56/LICENSE"
+    }
+  ],
+  "ecolor": [
+    {
+      "file": "licenses/egui-44cdd653e2/LICENSE-MIT",
+      "source": "https://raw.githubusercontent.com/emilk/egui/44cdd653e2317d300fb8a6c9c36b03f23991e803/LICENSE-MIT"
+    },
+    {
+      "file": "licenses/egui-44cdd653e2/LICENSE-APACHE",
+      "source": "https://raw.githubusercontent.com/emilk/egui/44cdd653e2317d300fb8a6c9c36b03f23991e803/LICENSE-APACHE"
+    }
+  ],
+  "eframe": [
+    {
+      "file": "licenses/egui-44cdd653e2/LICENSE-MIT",
+      "source": "https://raw.githubusercontent.com/emilk/egui/44cdd653e2317d300fb8a6c9c36b03f23991e803/LICENSE-MIT"
+    },
+    {
+      "file": "licenses/egui-44cdd653e2/LICENSE-APACHE",
+      "source": "https://raw.githubusercontent.com/emilk/egui/44cdd653e2317d300fb8a6c9c36b03f23991e803/LICENSE-APACHE"
+    }
+  ],
+  "egui": [
+    {
+      "file": "licenses/egui-44cdd653e2/LICENSE-MIT",
+      "source": "https://raw.githubusercontent.com/emilk/egui/44cdd653e2317d300fb8a6c9c36b03f23991e803/LICENSE-MIT"
+    },
+    {
+      "file": "licenses/egui-44cdd653e2/LICENSE-APACHE",
+      "source": "https://raw.githubusercontent.com/emilk/egui/44cdd653e2317d300fb8a6c9c36b03f23991e803/LICENSE-APACHE"
+    }
+  ],
+  "egui-winit": [
+    {
+      "file": "licenses/egui-44cdd653e2/LICENSE-MIT",
+      "source": "https://raw.githubusercontent.com/emilk/egui/44cdd653e2317d300fb8a6c9c36b03f23991e803/LICENSE-MIT"
+    },
+    {
+      "file": "licenses/egui-44cdd653e2/LICENSE-APACHE",
+      "source": "https://raw.githubusercontent.com/emilk/egui/44cdd653e2317d300fb8a6c9c36b03f23991e803/LICENSE-APACHE"
+    }
+  ],
+  "egui_glow": [
+    {
+      "file": "licenses/egui-44cdd653e2/LICENSE-MIT",
+      "source": "https://raw.githubusercontent.com/emilk/egui/44cdd653e2317d300fb8a6c9c36b03f23991e803/LICENSE-MIT"
+    },
+    {
+      "file": "licenses/egui-44cdd653e2/LICENSE-APACHE",
+      "source": "https://raw.githubusercontent.com/emilk/egui/44cdd653e2317d300fb8a6c9c36b03f23991e803/LICENSE-APACHE"
+    }
+  ],
+  "emath": [
+    {
+      "file": "licenses/egui-44cdd653e2/LICENSE-MIT",
+      "source": "https://raw.githubusercontent.com/emilk/egui/44cdd653e2317d300fb8a6c9c36b03f23991e803/LICENSE-MIT"
+    },
+    {
+      "file": "licenses/egui-44cdd653e2/LICENSE-APACHE",
+      "source": "https://raw.githubusercontent.com/emilk/egui/44cdd653e2317d300fb8a6c9c36b03f23991e803/LICENSE-APACHE"
+    }
+  ],
+  "epaint": [
+    {
+      "file": "licenses/egui-44cdd653e2/LICENSE-MIT",
+      "source": "https://raw.githubusercontent.com/emilk/egui/44cdd653e2317d300fb8a6c9c36b03f23991e803/LICENSE-MIT"
+    },
+    {
+      "file": "licenses/egui-44cdd653e2/LICENSE-APACHE",
+      "source": "https://raw.githubusercontent.com/emilk/egui/44cdd653e2317d300fb8a6c9c36b03f23991e803/LICENSE-APACHE"
+    }
+  ],
+  "gl_generator": [
+    {
+      "file": "licenses/gl-rs-ea503e8d5f/LICENSE",
+      "source": "https://raw.githubusercontent.com/brendanzab/gl-rs/ea503e8d5fb6d73c6030e6191ce738cd3bf3433e/LICENSE"
+    }
+  ],
+  "khronos_api": [
+    {
+      "file": "licenses/gl-rs-f150967b1c/LICENSE",
+      "source": "https://raw.githubusercontent.com/brendanzab/gl-rs/f150967b1c44ae888e6676f93f639ebc82771bdc/LICENSE"
+    }
+  ],
+  "profiling": [
+    {
+      "file": "licenses/profiling-8271551172/LICENSE-MIT",
+      "source": "https://raw.githubusercontent.com/aclysma/profiling/8271551172eb6fa4cba47369aedd93790c623df9/LICENSE-MIT"
+    },
+    {
+      "file": "licenses/profiling-8271551172/LICENSE-APACHE",
+      "source": "https://raw.githubusercontent.com/aclysma/profiling/8271551172eb6fa4cba47369aedd93790c623df9/LICENSE-APACHE"
+    }
+  ]
+}

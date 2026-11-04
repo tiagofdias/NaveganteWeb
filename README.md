@@ -21,7 +21,9 @@ Não é necessário instalar runtimes, abrir um terminal, copiar códigos ou ini
 
 **Versão de teste:** o executável ainda não tem assinatura digital de editor. Não se deve desativar as proteções do Windows para o executar. Uma distribuição final ao público deverá incluir assinatura digital.
 
-A preparação para assinar os downloads com identidade verificada está em [docs/signing.md](docs/signing.md). O processo usa SHA-256, timestamp e verificação obrigatória antes de produzir um artefacto assinado. A emissão do certificado continua pendente.
+A preparação da assinatura gratuita via SignPath está em [docs/signing.md](docs/signing.md). A licença MIT, o workflow verificável e a candidatura estão preparados; a aceitação pela fundação continua pendente. Ver a [Code signing policy](docs/code-signing-policy.md) e a [política de privacidade](docs/privacy.md).
+
+O código original deste projeto está disponível sob a [licença MIT](LICENSE). As dependências mantêm as respetivas licenças; os direitos sobre marcas de terceiros não são concedidos por esta licença.
 ## Compilar a aplicação Rust
 
 Instalar Rust estável e as ferramentas de compilação Windows (MSVC Build Tools ou MinGW para a toolchain GNU):

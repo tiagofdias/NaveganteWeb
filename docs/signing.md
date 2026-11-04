@@ -4,7 +4,43 @@ The public 2.0 executable is currently unsigned. The scripts below prepare the
 Authenticode release process; they do not issue a certificate or establish
 SmartScreen reputation by themselves.
 
-## Obtain the publisher identity
+## Free open-source signing (selected route)
+
+The project is now licensed under MIT. We are preparing to apply to
+[SignPath Foundation](https://signpath.org/apply) for free signing. No purchase
+is required for an accepted project. Approval is not automatic, and no SignPath
+certificate or API token has been issued to this project yet.
+
+- [Code signing policy](code-signing-policy.md), including maintainer roles.
+- [Privacy policy](privacy.md).
+- [Application draft and setup checklist](signpath-application.md).
+- [GitHub-hosted Windows workflow](../.github/workflows/native-windows.yml).
+
+The workflow builds and tests unsigned artifacts on ordinary pushes. Once the
+project is approved, configure the repository secret `SIGNPATH_API_TOKEN` and
+variables `SIGNPATH_ORGANIZATION_ID`, `SIGNPATH_PROJECT_SLUG`,
+`SIGNPATH_SIGNING_POLICY_SLUG` and `SIGNPATH_CERTIFICATE_THUMBPRINT`. Install the
+SignPath GitHub App if required by the approved integration. Enable MFA on both
+accounts and configure the manual release-signing approval policy in SignPath.
+
+In SignPath, configure a ZIP artifact containing `Navegante-Web.exe`, `LICENSE` and `THIRD-PARTY-NOTICES.txt`,
+sign only the EXE and enforce its product/version metadata. The executable's
+`ProductName` is `Navegante Desktop`. The result must retain the same filenames.
+The workflow generates the dependency license inventory and notice bundle using
+`scripts/native-license-notices.py`. It preserves upstream license texts, including
+font licenses, and stops on missing declarations/texts. Upstream root licenses
+missing from packaged crates are pinned under `native/licenses` to the crate's
+packaged VCS commit. The inventory is not a substitute for SignPath's eligibility
+review; font/data licenses are disclosed alongside the Rust code licenses.
+
+To request signing, dispatch **Native Windows build and signing** on `main` with
+`sign=true`. The service retrieves the uploaded build from GitHub, verifies its
+origin and waits for the maintainer's approval. Signed results are verified
+against the configured certificate and timestamp before being uploaded as a
+separate GitHub Actions artifact. The workflow does not publish or overwrite a
+public release automatically. Signing secrets are never used for pull requests.
+
+## Optional purchased certificate (not required for the free route)
 
 For an individual based in Portugal, Microsoft Azure Artifact Signing Public
 Trust is not currently available: individual developers must be in the USA or
@@ -13,7 +49,7 @@ Canada. A certificate authority supporting individuals is required.
 Certum offers cloud-backed certificates that work with Windows SignTool:
 
 - [Standard Code Signing in the Cloud](https://shop.certum.eu/standard-code-signing-in-the-cloud.html): listed from EUR 209 on 4 November 2026. Confirm duration, taxes, availability and final price at checkout.
-- [Open Source Code Signing in the Cloud](https://shop.certum.eu/open-source-code-signing-on-simplysign.html): listed from EUR 49, but the page currently reports out of stock. Eligibility must be confirmed with Certum. A public repository alone does not establish open-source licensing; this repository currently has no project license. Do not select a license without the owner's decision.
+- [Open Source Code Signing in the Cloud](https://shop.certum.eu/open-source-code-signing-on-simplysign.html): listed from EUR 49, but the page currently reports out of stock. Eligibility must be confirmed with Certum.
 
 The certificate is issued in the developer's verified legal identity, rather than
 an invented Navegante/TML publisher identity. Complete identity verification
