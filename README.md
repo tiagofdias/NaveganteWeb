@@ -10,7 +10,7 @@ A homepage dá destaque ao download da aplicação Windows. A [demo opcional](ht
 
 A aplicação Windows 2.1 é **nativa, escrita em Rust**, com interface egui e acesso direto ao leitor PC/SC. Não usa Electron, WebView, Edge, Python ou servidor local.
 
-1. [Descarregar o Navegante-Web.exe](https://github.com/tiagofdias/NaveganteWeb/releases/download/v2.1.3/Navegante-Web.exe) e abrir o ficheiro.
+1. [Descarregar o Navegante-Web.exe](https://github.com/tiagofdias/NaveganteWeb/releases/download/v2.1.4/Navegante-Web.exe) e abrir o ficheiro.
 2. Escolher **Carregar passe**. A aplicação pede para ligar o leitor e inserir o cartão apenas quando ainda faltam. Com vários leitores, pede para escolher um.
 3. Consultar titular, validade, títulos e saldo. Escolher **Carregar um passe** ou **Adicionar saldo**, selecionar a opção e rever o valor.
 4. Confirmar o pagamento quando necessário e gravar o carregamento. Aguardar a confirmação antes de retirar o cartão.

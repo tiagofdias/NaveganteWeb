@@ -4,7 +4,7 @@
 
 The project is preparing an application to SignPath Foundation's free open-source
 signing program. Acceptance and signing credentials are **pending**. The public
-2.1.3 download is unsigned. An MIT license and a passing build do not mean that
+2.1.4 download is unsigned. An MIT license and a passing build do not mean that
 SignPath has accepted or signed the project.
 
 If approved, the attribution for that service will be:
