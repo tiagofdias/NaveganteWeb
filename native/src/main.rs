@@ -28,15 +28,18 @@ enum Step {
     Done,
 }
 struct Reply {
+    epoch: u64,
     kind: &'static str,
     result: Result<Value, String>,
     purchase: Value,
 }
 struct App {
-    tx: Sender<Command>,
+    tx: Sender<(u64, Command)>,
     rx: Receiver<Reply>,
     step: Step,
     busy: bool,
+    probe_pending: bool,
+    detection_epoch: u64,
     error: String,
     readers: Vec<String>,
     reader: String,
@@ -86,7 +89,7 @@ impl App {
                 wait: std::env::args().any(|a| a == "--demo-wait"),
                 ..Default::default()
             };
-            while let Ok(command) = commands.recv() {
+            while let Ok((epoch, command)) = commands.recv() {
                 let kind = kind(&command);
                 let result = if demo {
                     demo_backend.run(command)
@@ -106,6 +109,7 @@ impl App {
                 };
                 if replies
                     .send(Reply {
+                        epoch,
                         kind,
                         result,
                         purchase,
@@ -117,11 +121,16 @@ impl App {
                 ctx.request_repaint();
             }
         });
+        Self::with_channels(tx, rx, demo)
+    }
+    fn with_channels(tx: Sender<(u64, Command)>, rx: Receiver<Reply>, demo: bool) -> Self {
         Self {
             tx,
             rx,
             step: Step::Home,
             busy: false,
+            probe_pending: false,
+            detection_epoch: 0,
             error: String::new(),
             readers: vec![],
             reader: String::new(),
@@ -159,14 +168,24 @@ impl App {
         if self.busy {
             return;
         }
-        self.error.clear();
-        self.busy = true;
-        if self.tx.send(c).is_err() {
+        let probe = matches!(c, Command::Probe(_));
+        if probe {
+            if self.probe_pending || self.step != Step::Detect {
+                return;
+            }
+            self.probe_pending = true;
+        } else {
+            self.error.clear();
+            self.busy = true;
+        }
+        if self.tx.send((self.detection_epoch, c)).is_err() {
             self.busy = false;
+            self.probe_pending = false;
             self.error = "O serviço da aplicação terminou. Reabre a aplicação.".into()
         }
     }
     fn start(&mut self) {
+        self.detection_epoch = self.detection_epoch.wrapping_add(1);
         self.step = Step::Detect;
         self.error.clear();
         self.probe_failed = false;
@@ -176,9 +195,24 @@ impl App {
         let state = self.purchase["state"].as_str().unwrap_or("");
         !state.is_empty() && state != "loaded"
     }
+    fn should_probe(&self) -> bool {
+        self.step == Step::Detect
+            && !self.busy
+            && !self.probe_pending
+            && (self.readers.is_empty() || !self.reader.is_empty())
+            && (self.error.is_empty() || self.probe_failed)
+            && self.last_probe.elapsed() > Duration::from_millis(900)
+    }
     fn receive(&mut self) {
         while let Ok(reply) = self.rx.try_recv() {
-            self.busy = false;
+            if reply.kind == "probe" {
+                self.probe_pending = false;
+                if self.step != Step::Detect || reply.epoch != self.detection_epoch {
+                    continue;
+                }
+            } else {
+                self.busy = false;
+            }
             if !reply.purchase["state"].as_str().unwrap_or("").is_empty() {
                 self.purchase = reply.purchase;
             }
@@ -192,14 +226,26 @@ impl App {
                 }
                 Ok(v) => match reply.kind {
                     "probe" => {
+                        if self.probe_failed {
+                            self.error.clear();
+                        }
                         self.probe_failed = false;
                         self.readers = model::rows(&v["readers"])
                             .iter()
                             .filter_map(Value::as_str)
                             .map(str::to_owned)
                             .collect();
-                        self.reader = model::text(&v["reader"]);
-                        if v["present"] == true && self.step == Step::Detect {
+                        let detected_reader = model::text(&v["reader"]);
+                        if self.reader.is_empty() {
+                            self.reader = detected_reader.clone();
+                        } else if !self.readers.contains(&self.reader) {
+                            self.reader.clear();
+                        }
+                        if !self.busy
+                            && !self.reader.is_empty()
+                            && detected_reader == self.reader
+                            && v["present"] == true
+                        {
                             if self.recovering {
                                 self.send(Command::Recover {
                                     sale: self.recovery.trim().into(),
@@ -472,6 +518,7 @@ impl App {
                             "Leitor ligado. À espera do cartão…"
                         });
                         if !self.readers.is_empty() {
+                            let previous_reader = self.reader.clone();
                             egui::ComboBox::from_id_salt("reader")
                                 .selected_text(if self.reader.is_empty() {
                                     "Selecionar leitor"
@@ -488,6 +535,12 @@ impl App {
                                         );
                                     }
                                 });
+                            if self.reader != previous_reader {
+                                self.last_probe = Instant::now() - Duration::from_secs(2);
+                            }
+                            if ui.small_button("Atualizar lista").clicked() {
+                                self.send(Command::Probe(self.reader.clone()));
+                            }
                         }
                         if self.busy {
                             ui.spinner();
@@ -606,11 +659,9 @@ impl App {
                 let details = self.details.clone();
                 Self::panel(ui, |ui| {
                     for price in &prices {
-                        let amount = service::price_amount(price)
-                            .map(model::money)
+                        let label = service::price_amount(price)
+                            .map(|amount| model::choice_label(&details, price, amount))
                             .unwrap_or_else(|_| "Preço indisponível".into());
-                        let label =
-                            format!("{}   {}", model::option_label(&details, price), amount);
                         let blocked = price["blockedReason"].as_str();
                         let selected = self.variant == model::text(&price["id"]);
                         egui::Frame::new()
@@ -878,11 +929,7 @@ impl eframe::App for App {
                 self.close_dialog = true;
             }
         }
-        if self.step == Step::Detect
-            && !self.busy
-            && (self.error.is_empty() || self.probe_failed)
-            && self.last_probe.elapsed() > Duration::from_millis(900)
-        {
+        if self.should_probe() {
             self.last_probe = Instant::now();
             self.send(Command::Probe(self.reader.clone()));
         }
@@ -1033,12 +1080,117 @@ impl eframe::App for App {
                     }
                 });
         }
-        if self.step == Step::Detect
+        if (self.step == Step::Detect
+            && (self.readers.is_empty() || !self.reader.is_empty() || self.probe_pending))
             || (self.step == Step::Payment && self.purchase["state"] == "pending")
             || self.busy
         {
             ctx.request_repaint_after(Duration::from_millis(200));
         }
+    }
+}
+#[cfg(test)]
+mod detection_tests {
+    use super::*;
+    fn app() -> (App, Receiver<(u64, Command)>, Sender<Reply>) {
+        let (tx, commands) = mpsc::channel();
+        let (replies, rx) = mpsc::channel();
+        let mut app = App::with_channels(tx, rx, false);
+        app.start();
+        (app, commands, replies)
+    }
+    fn reply(app: &mut App, replies: &Sender<Reply>, reader: &str, present: bool, epoch: u64) {
+        replies
+            .send(Reply {
+                epoch,
+                kind: "probe",
+                result: Ok(json!({"readers":["A","B"],"reader":reader,"present":present})),
+                purchase: Value::Null,
+            })
+            .unwrap();
+        app.receive();
+    }
+    #[test]
+    fn scanning_is_silent_and_waits_for_choice() {
+        let (mut app, commands, replies) = app();
+        app.send(Command::Probe(String::new()));
+        assert!(!app.busy);
+        assert!(app.probe_pending);
+        let epoch = app.detection_epoch;
+        reply(&mut app, &replies, "", false, epoch);
+        assert!(matches!(commands.try_recv().unwrap().1, Command::Probe(_)));
+        assert!(commands.try_recv().is_err());
+        assert!(!app.should_probe());
+        assert_eq!(app.step, Step::Detect);
+        app.reader = "B".into();
+        assert!(app.should_probe());
+        app.send(Command::Probe("B".into()));
+        commands.try_recv().unwrap();
+        reply(&mut app, &replies, "B", true, epoch);
+        assert!(matches!(commands.try_recv().unwrap().1,Command::Read(r) if r=="B"));
+        assert!(app.busy);
+    }
+    #[test]
+    fn old_probe_does_not_overwrite_a_new_selection() {
+        let (mut app, commands, replies) = app();
+        app.reader = "A".into();
+        app.send(Command::Probe("A".into()));
+        commands.try_recv().unwrap();
+        app.reader = "B".into();
+        let epoch = app.detection_epoch;
+        reply(&mut app, &replies, "A", true, epoch);
+        assert_eq!(app.reader, "B");
+        assert_eq!(app.step, Step::Detect);
+        assert!(commands.try_recv().is_err());
+    }
+    #[test]
+    fn leaving_detection_ignores_late_probe() {
+        let (mut app, commands, replies) = app();
+        app.send(Command::Probe(String::new()));
+        commands.try_recv().unwrap();
+        app.step = Step::Home;
+        let epoch = app.detection_epoch;
+        reply(&mut app, &replies, "A", true, epoch);
+        assert_eq!(app.step, Step::Home);
+        assert!(commands.try_recv().is_err());
+        assert!(!app.probe_pending);
+    }
+    #[test]
+    fn restarting_detection_ignores_previous_generation() {
+        let (mut app, commands, replies) = app();
+        app.send(Command::Probe(String::new()));
+        commands.try_recv().unwrap();
+        let epoch = app.detection_epoch;
+        app.start();
+        reply(&mut app, &replies, "A", true, epoch);
+        assert!(app.reader.is_empty());
+        assert!(commands.try_recv().is_err());
+        assert!(app.should_probe());
+    }
+    #[test]
+    fn probe_does_not_unlock_foreground_operation() {
+        let (mut app, commands, replies) = app();
+        app.send(Command::Probe(String::new()));
+        commands.try_recv().unwrap();
+        app.send(Command::Catalog);
+        commands.try_recv().unwrap();
+        let epoch = app.detection_epoch;
+        reply(&mut app, &replies, "A", true, epoch);
+        assert!(app.busy);
+        assert_eq!(app.step, Step::Detect);
+        assert!(commands.try_recv().is_err());
+    }
+    #[test]
+    fn background_retry_keeps_error_stable_until_success() {
+        let (mut app, _commands, replies) = app();
+        app.probe_failed = true;
+        app.error = "Reader unavailable".into();
+        app.send(Command::Probe(String::new()));
+        assert_eq!(app.error, "Reader unavailable");
+        let epoch = app.detection_epoch;
+        reply(&mut app, &replies, "", false, epoch);
+        assert!(app.error.is_empty());
+        assert!(!app.probe_failed);
     }
 }
 #[derive(Default)]
@@ -1124,6 +1276,32 @@ impl Demo {
     }
 }
 fn main() -> eframe::Result {
+    if let Some(reader) = std::env::args()
+        .skip_while(|a| a != "--review-check")
+        .nth(1)
+    {
+        let result = (|| -> anyhow::Result<()> {
+            let mut service = service::Service::new()?;
+            service.run(Command::Read(reader))?;
+            service.run(Command::Catalog)?;
+            let details = service.run(Command::Product("id-prod-zapping".into()))?;
+            let price = model::rows(&details["prices"])
+                .iter()
+                .find(|p| service::price_amount(p).ok() == Some(1500))
+                .ok_or_else(|| anyhow::anyhow!("Opção de 15 euros não disponível."))?;
+            let quote = service.run(Command::Prepare(model::text(&price["id"])))?;
+            println!(
+                "Official Rust price review OK; {} cents. No payment or card write requested.",
+                quote["amount"]
+            );
+            Ok(())
+        })();
+        if let Err(e) = result {
+            eprintln!("{e}");
+            std::process::exit(1);
+        }
+        return Ok(());
+    }
     if let Some(reader) = std::env::args().skip_while(|a| a != "--read-check").nth(1) {
         let result = (|| -> anyhow::Result<()> {
             let ctx = pcsc::Context::new()?;
@@ -1169,6 +1347,7 @@ fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([1160., 850.])
+            .with_maximized(true)
             .with_min_inner_size([760., 640.])
             .with_icon(icon),
         renderer: eframe::Renderer::Glow,

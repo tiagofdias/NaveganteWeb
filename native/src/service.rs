@@ -34,6 +34,7 @@ pub struct Service {
     card: Value,
     catalog: Value,
     details: Value,
+    product_id: String,
     quote: Value,
     quote_at: Option<Instant>,
     sale: Option<String>,
@@ -50,6 +51,7 @@ impl Service {
             card: Value::Null,
             catalog: Value::Null,
             details: Value::Null,
+            product_id: String::new(),
             quote: Value::Null,
             quote_at: None,
             sale: None,
@@ -93,6 +95,7 @@ impl Service {
                 self.card = data.clone();
                 self.catalog = Value::Null;
                 self.details = Value::Null;
+                self.product_id.clear();
                 self.quote = Value::Null;
                 self.sale = None;
                 self.state.clear();
@@ -231,6 +234,7 @@ impl Service {
                             &format!("products/{pid}?read_id={}", self.read_id),
                             None,
                         )?;
+                        self.product_id = pid.clone();
                         self.quote = Value::Null;
                         let mut details = self.details.clone();
                         for price in details["prices"].as_array_mut().into_iter().flatten() {
@@ -245,8 +249,11 @@ impl Service {
                         Ok(details)
                     }
                     Command::Prepare(variant) => {
+                        self.quote = Value::Null;
+                        self.quote_at = None;
                         let variant = protocol::id(&json!(variant))?;
-                        let pid = protocol::id(&self.details["id"])?;
+                        let pid = protocol::id(&json!(self.product_id))?;
+                        protocol::id(&self.details["id"])?;
                         let prices: Vec<_> = rows(&self.details["prices"])
                             .iter()
                             .filter(|p| p["id"] == variant)
@@ -269,11 +276,11 @@ impl Service {
                                 .map_err(|_| anyhow::anyhow!("Parâmetros de preço inválidos."))?;
                             price[key] = json!(n);
                         }
-                        price.as_object_mut().unwrap().retain(|k, _| {
+                        price.as_object_mut().unwrap().retain(|k, value| {
                             matches!(
                                 k.as_str(),
                                 "id" | "description" | "net" | "tax" | "tax_factor" | "quantity"
-                            )
+                            ) && !value.is_null()
                         });
                         let mut fields = vec![];
                         for attr in rows(&self.details["attributes"]) {
@@ -287,7 +294,8 @@ impl Service {
                             );
                             fields.push(json!({"id":values[0]["id"],"value":values[0]["value"]}));
                         }
-                        let result=self.api.gateway("PUT",&format!("products/{pid}?read_id={}",self.read_id),Some(json!({"id":self.details["id"],"attributes":fields,"prices":[price]})))?;
+                        let result=self.api.gateway("PUT",&format!("products/{pid}?read_id={}",self.read_id),Some(json!({"id":self.details["id"],"attributes":fields,"prices":[price]})))
+                            .map_err(|e|anyhow::anyhow!("Não foi possível confirmar o preço no serviço oficial. Nenhum pagamento foi iniciado. {e}"))?;
                         if result.is_object() {
                             let matched: Vec<_> = rows(&result["prices"])
                                 .iter()
@@ -505,7 +513,8 @@ mod tests {
         let mut s = quoted(api);
         s.read_id = "test-read".into();
         s.read_at = Some(Instant::now());
-        s.details = json!({"id":"id-prod-navegante-metro","name":"Metropolitano","attributes":[{"id":"product_monthly","values":[{"id":"variant-nov","value":"11"}]}],"prices":[{"id":"variant-nov","net":"4000","tax":"0","quantity":"1","tax_factor":"0","unused":"do-not-send"}]});
+        s.product_id = "id-prod-navegante-metro".into();
+        s.details = json!({"id":"internal-product-id","name":"Metropolitano","attributes":[{"id":"product_monthly","values":[{"id":"variant-nov","value":"11"}]}],"prices":[{"id":"variant-nov","description":null,"net":"4000","tax":"0","quantity":"1","tax_factor":"0","unused":"do-not-send"}]});
         assert_eq!(
             s.run(Command::Prepare("variant-nov".into())).unwrap()["amount"],
             4000
@@ -516,10 +525,60 @@ mod tests {
         let body: Value =
             serde_json::from_str(envelope["request"]["body"].as_str().unwrap()).unwrap();
         assert_eq!(
+            envelope["request"]["path"],
+            "products/id-prod-navegante-metro?read_id=test-read"
+        );
+        assert_eq!(body["id"], "internal-product-id");
+        assert_eq!(
             body["attributes"][0],
             json!({"id":"variant-nov","value":"11"})
         );
         assert_eq!(body["prices"][0]["net"], 4000);
         assert!(body["prices"][0].get("unused").is_none());
+        assert!(body["prices"][0].get("description").is_none());
+    }
+    #[test]
+    fn zapping_review_preserves_catalog_id_and_does_not_pay() {
+        let details = json!({"id":"internal-zapping-id","name":"Zapping","attributes":[{"id":"product_occasional","values":[{"id":"fifteen","value":"1500"}]}],"prices":[{"id":"fifteen","net":"1415","tax":"85","quantity":"1500","tax_factor":"600"}]});
+        let (api, worker) = crate::test_support::api(vec![
+            json!({"status":200,"body":details}),
+            json!({"status":200,"body":{"prices":[{"id":"fifteen","net":"1415","tax":"85"}]}}),
+        ]);
+        let mut s = quoted(api);
+        s.read_id = "test-read".into();
+        s.read_at = Some(Instant::now());
+        s.catalog = json!({"products":[{"id":"id-prod-zapping"}]});
+        s.run(Command::Product("id-prod-zapping".into())).unwrap();
+        let quote = s.run(Command::Prepare("fifteen".into())).unwrap();
+        assert_eq!(quote["amount"], 1500);
+        assert_eq!(quote["product"], "id-prod-zapping");
+        assert!(s.sale.is_none());
+        let requests = worker.join().unwrap();
+        assert_eq!(requests.len(), 2);
+        let envelope: Value =
+            serde_json::from_str(requests[1].split_once('\n').unwrap().1).unwrap();
+        assert_eq!(
+            envelope["request"]["path"],
+            "products/id-prod-zapping?read_id=test-read"
+        );
+        let body: Value =
+            serde_json::from_str(envelope["request"]["body"].as_str().unwrap()).unwrap();
+        assert_eq!(body["id"], "internal-zapping-id");
+        assert_eq!(body["prices"][0]["quantity"], 1500);
+    }
+    #[test]
+    fn failed_price_review_clears_previous_quote() {
+        let (api, worker) = crate::test_support::api(vec![json!({"status":500,"body":null})]);
+        let mut s = quoted(api);
+        s.read_id = "test-read".into();
+        s.read_at = Some(Instant::now());
+        s.product_id = "id-prod-zapping".into();
+        s.details = json!({"id":"internal-zapping-id","prices":[{"id":"fifteen","net":"1415","tax":"85","quantity":"1500","tax_factor":"600"}]});
+        let error = s.run(Command::Prepare("fifteen".into())).unwrap_err();
+        assert!(error.to_string().contains("Nenhum pagamento"));
+        assert!(s.quote.is_null());
+        assert!(s.quote_at.is_none());
+        assert!(s.sale.is_none());
+        worker.join().unwrap();
     }
 }

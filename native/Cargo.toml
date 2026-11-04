@@ -1,6 +1,6 @@
 [package]
 name = "navegante-desktop"
-version = "2.1.0"
+version = "2.1.1"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/tiagofdias/NaveganteWeb"

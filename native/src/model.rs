@@ -206,6 +206,22 @@ pub fn option_label(details: &Value, price: &Value) -> String {
     }
     names.join(" · ")
 }
+pub fn choice_label(details: &Value, price: &Value, amount: i64) -> String {
+    let label = option_label(details, price);
+    let same_balance = rows(&details["attributes"]).iter().any(|a| {
+        a["id"] == "product_occasional"
+            && rows(&a["values"]).iter().any(|v| {
+                v["id"] == price["id"] && text(&v["value"]).parse::<i64>().ok() == Some(amount)
+            })
+    });
+    if label.is_empty() {
+        money(amount)
+    } else if same_balance {
+        label
+    } else {
+        format!("{label} · {}", money(amount))
+    }
+}
 pub fn blocked(
     card: &Value,
     pid: &str,
@@ -284,6 +300,16 @@ mod tests {
     #[test]
     fn exact_cents() {
         assert_eq!(money(1235), "12,35 €");
+    }
+    #[test]
+    fn balance_choice_does_not_repeat_the_same_price() {
+        let details = json!({"attributes":[{"id":"product_occasional","values":[{"id":"fifteen","value":"1500"}]}]});
+        let price = json!({"id":"fifteen"});
+        assert_eq!(choice_label(&details, &price, 1500), "Saldo de 15,00 €");
+        assert_eq!(
+            choice_label(&details, &price, 1600),
+            "Saldo de 15,00 € · 16,00 €"
+        );
     }
     #[test]
     fn metro_blocks_same_month_municipal_but_not_next_month_or_balance() {
