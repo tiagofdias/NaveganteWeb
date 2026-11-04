@@ -321,6 +321,7 @@ impl App {
                 ui.visuals_mut().override_text_color = Some(Color32::from_rgb(24, 28, 10));
                 ui.visuals_mut().widgets.noninteractive.fg_stroke.color =
                     Color32::from_rgb(24, 28, 10);
+                ui.visuals_mut().widgets.active.fg_stroke.color = Color32::from_rgb(24, 28, 10);
                 ui.horizontal(|ui| {
                     ui.label(RichText::new("navegante®").size(27.).strong());
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
