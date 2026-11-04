@@ -6,23 +6,25 @@
 - A demo opcional em https://navegante-web-xi.vercel.app/demo/ inicia automaticamente a simulação com dados fictícios.
 - O site não procura leitores, não inicia pagamentos e não grava cartões reais.
 - A página explica como descarregar a aplicação Windows e usar o mesmo percurso com um cartão real.
-- A aplicação é o mesmo HTML, CSS e JavaScript, apresentado numa janela própria do Microsoft Edge. Não é um conector que obrigue a voltar ao site.
+- A aplicação 2.0 é escrita em Rust, com interface nativa egui/eframe e acessibilidade Windows. Não usa Electron, WebView, browser, Python ou servidor HTTP local.
 
 ## Arquitetura
 
 ```text
 Vercel → interface estática → simulação no navegador
 
-Navegante-Web.exe (Windows)
-  ├── mesma interface numa janela própria
-  └── servidor local numa porta livre de 127.0.0.1
-       ├── Windows PC/SC → leitor USB → cartão
-       └── serviços oficiais de bilhética/pagamento
+Navegante-Web.exe (Rust, Windows x64)
+  ├── interface nativa → decisões do utilizador
+  └── tarefa de operações, serializadas
+       ├── winscard.dll / PC/SC → leitor USB → cartão
+       └── HTTPS → serviços oficiais de bilhética/pagamento
 ```
 
 O build público cria a homepage de download em `dist/index.html` e a demo em `dist/demo/index.html`, onde ativa `data-hosted-demo="true"`. A função de pedidos bloqueia operações reais nesse modo e a CSP usa `connect-src 'none'`. Não existe opção de sair para um modo real na Vercel. Não são publicados backends Python ou segredos na cloud.
 
-O executável contém Python e os quatro ficheiros da interface. Requer Windows 64 bits, Microsoft Edge e drivers do leitor. Abre o Edge em modo de aplicação, com um perfil temporário próprio, sem usar o perfil pessoal do utilizador. O servidor local usa uma porta livre e não aceita origens remotas. Ao fechar a janela, espera por uma operação de cartão em curso antes de terminar o serviço. Não usa base de dados própria nem guarda sessões de cartões em ficheiros.
+O percurso começa em «Carregar passe». A aplicação deteta o leitor, aguarda o cartão e avança automaticamente para os dados. Não consulta produtos até o utilizador escolher carregar um passe ou adicionar saldo. Com vários leitores, solicita uma escolha. Preço, confirmação MB WAY e gravação são passos distintos.
+
+Requer Windows 10/11 x64, OpenGL 3.3, Internet e drivers do leitor. Não usa base de dados nem guarda dados do cartão em ficheiros. A referência pode ser copiada pelo utilizador para recuperar um pedido depois de reabrir. Bloqueia pagamentos duplicados e períodos já cobertos; só aceita gravações provenientes de autorização oficial assinada e impede repetir uma gravação de resultado incerto. Fechar durante uma operação é impedido; um pedido pendente exige guardar a referência antes de sair.
 
 O código da ponte emparelhada permanece para desenvolvimento avançado e regressão, mas não faz parte do percurso público atual. O antigo Navegante Link não é necessário.
 
@@ -35,14 +37,15 @@ npm ci
 npm run build
 ```
 
-Aplicação Windows, a partir de Windows com Python 3.13:
+Aplicação Windows, com Rust estável e MSVC Build Tools ou MinGW para a toolchain GNU:
 
 ```powershell
-python -m pip install -r requirements-build.txt
+cargo test --locked --manifest-path native/Cargo.toml
+cargo clippy --locked --manifest-path native/Cargo.toml --all-targets -- -D warnings
 ./scripts/build-desktop.ps1
 ```
 
-Resultado: `release/Navegante-Web.exe`. A versão de PyInstaller está fixada em `requirements-build.txt`. A aplicação é portátil e não pede Python ao utilizador. O teste `--self-test` verifica o runtime gráfico, a página incluída e a enumeração de leitores, sem ler ou alterar cartões.
+Resultado: `release/Navegante-Web.exe`, portátil. `native/Cargo.lock` fixa as dependências. `--demo` usa dados fictícios; `--self-test` apenas enumera leitores. `--read-check "nome exato do leitor"` executa uma leitura real explícita, sem compra ou gravação. O código Python/web anterior permanece como referência e para regressão; não integra o executável Rust.
 
 **Assinatura:** o executável ainda não tem assinatura digital de editor; é distribuído como versão de teste. A assinatura continua pendente para distribuição final ao público. Não se contornam proteções do Windows.
 
@@ -50,6 +53,10 @@ Resultado: `release/Navegante-Web.exe`. A versão de PyInstaller está fixada em
 
 ```powershell
 python -m unittest discover -s tests
+cargo test --locked --manifest-path native/Cargo.toml
+powershell -NoProfile -File tests/native-ui.ps1 -Executable release/Navegante-Web.exe
+$env:NAVEGANTE_TEST_WAIT_DEVICES='1'
+powershell -NoProfile -File tests/native-ui.ps1 -Executable release/Navegante-Web.exe
 npm run build
 node tests/homepage.cjs
 node tests/hosted-demo.cjs
@@ -57,7 +64,7 @@ node tests/demo.cjs
 node tests/browser.cjs
 ```
 
-O teste da demo publicada verifica arranque automático, bloqueio do modo real e zero chamadas de rede, incluindo no percurso de pagamento e gravação simulados. O teste desktop verifica que a aplicação apresenta exatamente o HTML local, numa janela própria e com porta efémera. Os testes financeiros usam serviços simulados; não iniciam pagamentos ou gravações físicas.
+O teste da demo web verifica isolamento e zero chamadas de rede. O teste nativo usa Windows UI Automation para verificar espera e avanço automático, dados, decisão, saldo, compra simulada, proteção ao fechar e ausência de processos de browser/servidor. Os testes financeiros Rust usam um servidor de teste local e não contactam os serviços oficiais nem iniciam pagamentos ou gravações físicas.
 
 ## Vercel Hobby
 

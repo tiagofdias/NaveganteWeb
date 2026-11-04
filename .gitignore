@@ -17,6 +17,7 @@ dist/
 web/assets/
 docs/card-art.md
 release/
+native/target/
 
 .vercel
 .env*

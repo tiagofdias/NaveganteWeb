@@ -8,19 +8,31 @@ Demo online e aplicação Windows para consultar e carregar um passe Navegante c
 
 A homepage dá destaque ao download da aplicação Windows. A [demo opcional](https://navegante-web-xi.vercel.app/demo/) fica numa página separada e não contacta leitores, não cobra pagamentos nem carrega cartões reais.
 
-A aplicação Windows tem **exatamente a mesma interface**, com acesso ao leitor real:
+A aplicação Windows 2.0 é **nativa, escrita em Rust**, com interface egui e acesso direto ao leitor PC/SC. Não usa Electron, WebView, Edge, Python ou servidor local.
 
-1. [Descarregar o Navegante-Web.exe](https://github.com/tiagofdias/NaveganteWeb/releases/download/v1.2.1/Navegante-Web.exe) e abrir o ficheiro.
-2. A página abre numa janela própria. Ligar um leitor PC/SC compatível e inserir o cartão.
-3. Escolher **Ler o meu passe**, selecionar o título ou saldo e seguir os passos apresentados.
+1. [Descarregar o Navegante-Web.exe](https://github.com/tiagofdias/NaveganteWeb/releases/download/v2.0.0/Navegante-Web.exe) e abrir o ficheiro.
+2. Escolher **Carregar passe**. A aplicação pede para ligar o leitor e inserir o cartão apenas quando ainda faltam. Com vários leitores, pede para escolher um.
+3. Consultar titular, validade, títulos e saldo. Escolher **Carregar um passe** ou **Adicionar saldo**, selecionar a opção e rever o valor.
 4. Confirmar o pagamento quando necessário e gravar o carregamento. Aguardar a confirmação antes de retirar o cartão.
 
-Não é necessário instalar Python, abrir um terminal, copiar códigos ou iniciar sessão no GitHub/Vercel. A aplicação inclui o servidor e os ficheiros da interface. Usa o Microsoft Edge já instalado no Windows para apresentar a mesma página numa janela de aplicação, sem barra de endereços; o acesso ao leitor e aos serviços oficiais decorre no PC do utilizador.
+Não é necessário instalar runtimes, abrir um terminal, copiar códigos ou iniciar sessão no GitHub/Vercel. A janela é desenhada diretamente pela aplicação; o leitor e os serviços oficiais são usados no PC do utilizador. As operações decorrem numa tarefa separada para manter a interface responsiva. Sessões e dados do cartão permanecem apenas na memória.
 
-**Requisitos:** Windows 64 bits, Microsoft Edge e leitor PC/SC com os respetivos drivers. macOS e Linux ainda não têm aplicação distribuída. Não é necessária a instalação do antigo Navegante Link.
+**Requisitos:** Windows 10/11 de 64 bits, ligação à Internet, drivers gráficos com OpenGL 3.3 e leitor PC/SC com os respetivos drivers. macOS e Linux ainda não têm aplicação distribuída. Não é necessário o antigo Navegante Link.
 
 **Versão de teste:** o executável ainda não tem assinatura digital de editor. Não se deve desativar as proteções do Windows para o executar. Uma distribuição final ao público deverá incluir assinatura digital.
-## Desenvolvimento local
+## Compilar a aplicação Rust
+
+Instalar Rust estável e as ferramentas de compilação Windows (MSVC Build Tools ou MinGW para a toolchain GNU):
+
+```powershell
+cargo test --locked --manifest-path native/Cargo.toml
+cargo clippy --locked --manifest-path native/Cargo.toml --all-targets -- -D warnings
+./scripts/build-desktop.ps1
+```
+
+Resultado: `release/Navegante-Web.exe`. `native/Cargo.lock` fixa as dependências. O script não inclui ficheiros web nem Python. `--demo` permite testar a interface nativa com dados fictícios; `--self-test` verifica apenas o runtime e enumera os leitores. `tests/native-ui.ps1` testa o percurso completo por acessibilidade Windows, sem operações reais. Definir `NAVEGANTE_TEST_WAIT_DEVICES=1` permite testar também a espera por dispositivos simulados.
+
+## Implementação web anterior (desenvolvimento)
 
 
 Requisitos: Windows, Python 3.13 e leitor instalado. A aplicação usa apenas a biblioteca padrão do Python; não precisa de npm, pip ou Java para funcionar.
@@ -53,7 +65,7 @@ Verificação de isolamento e fluxo completo: `npm ci` e `node tests/demo.cjs` (
 
 ## Publicar a interface
 
-`npm run build` prepara apenas a interface estática em `dist/`, configurada por `vercel.json` para a Vercel. A homepage é uma página estática de apresentação e download; a demo em `/demo/` inicia automaticamente a simulação e bloqueia operações reais. Para cartões físicos, distribui-se a mesma interface no executável Windows. Ver [arquitetura, limites do Hobby e testes](docs/deployment.md).
+`npm run build` prepara apenas a interface estática em `dist/`, configurada por `vercel.json` para a Vercel. A homepage apresenta o download; a demo em `/demo/` inicia automaticamente a simulação e bloqueia operações reais. A demo web ilustra o carregamento; a aplicação Rust tem uma interface própria e um fluxo simplificado. Ver [arquitetura, limites do Hobby e testes](docs/deployment.md).
 
 ## O que foi efetivamente validado
 
@@ -65,6 +77,7 @@ Verificação de isolamento e fluxo completo: `npm ci` e `node tests/demo.cjs` (
 | Catálogo e preços | Consultados no serviço oficial para o cartão inserido |
 | Configuração do produto | `PUT products/...` aceite com HTTP lógico 200; revisão de preço testada no navegador |
 | Interface | Testada em Edge, em larguras de computador e telemóvel, sem erros JavaScript |
+| Desktop Rust | Leitura real no serviço oficial; testes de protocolo/compra e fluxo nativo por acessibilidade Windows, sem browser ou servidor local |
 | Pagamento MB WAY | Utilizador confirmou um pagamento real sem login; testes de regressão com serviços simulados |
 | Gravação | Implementada a partir do APK e coberta por testes simulados; não confundir pagamento com gravação confirmada |
 | Recuperação por referência | Implementada com referência de venda; não requer conta |

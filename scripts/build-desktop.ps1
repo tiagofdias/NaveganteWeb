@@ -1,9 +1,23 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Push-Location $projectRoot
 try {
-    python -m PyInstaller --noconfirm --onefile --windowed --name Navegante-Web --icon "${projectRoot}/desktop-assets/app.ico" --distpath release --workpath analysis/desktop-build --specpath analysis/desktop-spec --add-data "${projectRoot}/web/index.html:web" --add-data "${projectRoot}/web/app.js:web" --add-data "${projectRoot}/web/style.css:web" --add-data "${projectRoot}/web/forms.css:web" desktop.py
-    if ($LASTEXITCODE -ne 0) { throw 'Falhou a criação do executável.' }
+    if (-not (Get-Command cargo -ErrorAction SilentlyContinue)) {
+        $cargoBin = Join-Path $env:USERPROFILE '.cargo/bin'
+        if (Test-Path "$cargoBin/cargo.exe") { $env:Path = "$cargoBin;$env:Path" }
+    }
+    # Optional portable compiler used by this workspace. Standard MSVC Rust builds
+    # use the installed Visual Studio Build Tools without this fallback.
+    $portableGcc = Join-Path $projectRoot 'analysis/tools/rust/w64devkit/bin'
+    if ((rustc -vV) -match 'host: x86_64-pc-windows-gnu' -and (Test-Path "$portableGcc/gcc.exe")) {
+        $env:Path = "$portableGcc;$env:Path"
+        $env:CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER = 'gcc'
+        $env:RUSTFLAGS = '-C link-self-contained=yes'
+    }
+    cargo build --locked --release --manifest-path native/Cargo.toml
+    if ($LASTEXITCODE -ne 0) { throw 'Falhou a compilação Rust.' }
+    New-Item -ItemType Directory -Force release | Out-Null
+    Copy-Item -LiteralPath native/target/release/navegante-desktop.exe -Destination release/Navegante-Web.exe
     Get-FileHash -Algorithm SHA256 -LiteralPath release/Navegante-Web.exe
 } finally {
     Pop-Location
