@@ -994,28 +994,51 @@ impl eframe::App for App {
                         );
                     });
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.spacing_mut().item_spacing.x = 6.;
                         if ui
-                            .add_enabled(!self.busy, egui::Button::new("Fechar").small())
+                            .add_enabled_ui(!self.busy, |ui| {
+                                design::header_control(ui, "Fechar", design::HeaderControl::Close)
+                            })
+                            .inner
                             .clicked()
                         {
                             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                         }
                         if ui
-                            .small_button(if fullscreen {
-                                "Janela"
-                            } else {
-                                "Ecrã inteiro"
+                            .scope(|ui| {
+                                design::header_control(
+                                    ui,
+                                    if fullscreen {
+                                        "Janela"
+                                    } else {
+                                        "Ecrã inteiro"
+                                    },
+                                    design::HeaderControl::Window(fullscreen),
+                                )
                             })
+                            .inner
                             .on_hover_text("F11 alterna o ecrã inteiro. Esc regressa à janela.")
                             .clicked()
                         {
                             ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(!fullscreen));
                         }
+                        ui.add_space(8.);
+                        let (divider, _) =
+                            ui.allocate_exact_size(Vec2::new(1., 18.), egui::Sense::hover());
+                        ui.painter().line_segment(
+                            [divider.center_top(), divider.center_bottom()],
+                            egui::Stroke::new(1_f32, design::LINE),
+                        );
+                        ui.add_space(8.);
                         if ui
-                            .add_enabled(
-                                !self.busy && self.step != Step::Home,
-                                egui::Button::new("Voltar ao início"),
-                            )
+                            .add_enabled_ui(!self.busy && self.step != Step::Home, |ui| {
+                                design::header_control(
+                                    ui,
+                                    "Voltar ao início",
+                                    design::HeaderControl::Home,
+                                )
+                            })
+                            .inner
                             .clicked()
                         {
                             self.go_home();

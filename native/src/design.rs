@@ -100,6 +100,118 @@ pub fn primary(ui: &mut egui::Ui, label: &str) -> bool {
     }
     response.clicked()
 }
+#[derive(Clone, Copy)]
+pub enum HeaderControl {
+    Home,
+    Window(bool),
+    Close,
+}
+pub fn header_control(ui: &mut egui::Ui, label: &str, control: HeaderControl) -> egui::Response {
+    let width = if matches!(control, HeaderControl::Home) {
+        152.
+    } else {
+        38.
+    };
+    let (rect, response) = ui.allocate_exact_size(Vec2::new(width, 38.), egui::Sense::click());
+    response.widget_info(|| {
+        egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), label)
+    });
+    let enabled = ui.is_enabled();
+    let hover = enabled && response.hovered();
+    let close_hover = hover && matches!(control, HeaderControl::Close);
+    let color = if !enabled {
+        Color32::from_rgb(84, 98, 110)
+    } else if close_hover {
+        Color32::from_rgb(255, 176, 171)
+    } else if hover {
+        Color32::WHITE
+    } else {
+        Color32::from_rgb(178, 192, 203)
+    };
+    if hover || response.has_focus() {
+        ui.painter().rect_filled(
+            rect,
+            10.,
+            if close_hover {
+                Color32::from_rgb(63, 30, 35)
+            } else {
+                Color32::from_rgb(25, 34, 44)
+            },
+        );
+    }
+    if response.has_focus() {
+        ui.painter().rect_stroke(
+            rect,
+            10.,
+            Stroke::new(1_f32, YELLOW),
+            egui::StrokeKind::Inside,
+        );
+    }
+    let p = ui.painter();
+    let center = rect.center();
+    let stroke = Stroke::new(1.6_f32, color);
+    match control {
+        HeaderControl::Home => {
+            let c = Pos2::new(rect.min.x + 17., center.y);
+            p.line_segment([c + Vec2::new(6., 0.), c + Vec2::new(-6., 0.)], stroke);
+            p.add(egui::Shape::line(
+                vec![
+                    c + Vec2::new(-1., -5.),
+                    c + Vec2::new(-6., 0.),
+                    c + Vec2::new(-1., 5.),
+                ],
+                stroke,
+            ));
+            p.text(
+                Pos2::new(rect.min.x + 35., center.y),
+                Align2::LEFT_CENTER,
+                label,
+                strong(12.),
+                color,
+            );
+        }
+        HeaderControl::Close => {
+            p.line_segment([center - Vec2::splat(5.), center + Vec2::splat(5.)], stroke);
+            p.line_segment(
+                [center + Vec2::new(-5., 5.), center + Vec2::new(5., -5.)],
+                stroke,
+            );
+        }
+        HeaderControl::Window(fullscreen) => {
+            if fullscreen {
+                p.add(egui::Shape::line(
+                    vec![
+                        center + Vec2::new(-2., -6.),
+                        center + Vec2::new(6., -6.),
+                        center + Vec2::new(6., 2.),
+                    ],
+                    stroke,
+                ));
+                p.rect_stroke(
+                    Rect::from_min_max(center + Vec2::new(-6., -2.), center + Vec2::new(2., 6.)),
+                    1.,
+                    stroke,
+                    egui::StrokeKind::Inside,
+                );
+            } else {
+                for (x, y) in [(-1., -1.), (1., -1.), (-1., 1.), (1., 1.)] {
+                    p.add(egui::Shape::line(
+                        vec![
+                            center + Vec2::new(x * 2., y * 6.),
+                            center + Vec2::new(x * 6., y * 6.),
+                            center + Vec2::new(x * 6., y * 2.),
+                        ],
+                        stroke,
+                    ));
+                }
+            }
+        }
+    }
+    if hover {
+        ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+    }
+    response.on_hover_text(label)
+}
 pub fn title(ui: &mut egui::Ui, kicker: &str, title: &str, sub: &str) {
     eyebrow(ui, kicker);
     ui.add_space(10.);
