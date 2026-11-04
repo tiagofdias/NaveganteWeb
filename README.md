@@ -8,9 +8,9 @@ Demo online e aplicação Windows para consultar e carregar um passe Navegante c
 
 A homepage dá destaque ao download da aplicação Windows. A [demo opcional](https://navegante-web-xi.vercel.app/demo/) fica numa página separada e não contacta leitores, não cobra pagamentos nem carrega cartões reais.
 
-A aplicação Windows 2.0 é **nativa, escrita em Rust**, com interface egui e acesso direto ao leitor PC/SC. Não usa Electron, WebView, Edge, Python ou servidor local.
+A aplicação Windows 2.1 é **nativa, escrita em Rust**, com interface egui e acesso direto ao leitor PC/SC. Não usa Electron, WebView, Edge, Python ou servidor local.
 
-1. [Descarregar o Navegante-Web.exe](https://github.com/tiagofdias/NaveganteWeb/releases/download/v2.0.0/Navegante-Web.exe) e abrir o ficheiro.
+1. [Descarregar o Navegante-Web.exe](https://github.com/tiagofdias/NaveganteWeb/releases/download/v2.1.0/Navegante-Web.exe) e abrir o ficheiro.
 2. Escolher **Carregar passe**. A aplicação pede para ligar o leitor e inserir o cartão apenas quando ainda faltam. Com vários leitores, pede para escolher um.
 3. Consultar titular, validade, títulos e saldo. Escolher **Carregar um passe** ou **Adicionar saldo**, selecionar a opção e rever o valor.
 4. Confirmar o pagamento quando necessário e gravar o carregamento. Aguardar a confirmação antes de retirar o cartão.
@@ -24,6 +24,8 @@ Não é necessário instalar runtimes, abrir um terminal, copiar códigos ou ini
 A preparação da assinatura gratuita via SignPath está em [docs/signing.md](docs/signing.md). A licença MIT, o workflow verificável e a candidatura estão preparados; a aceitação pela fundação continua pendente. Ver a [Code signing policy](docs/code-signing-policy.md) e a [política de privacidade](docs/privacy.md).
 
 O código original deste projeto está disponível sob a [licença MIT](LICENSE). As dependências mantêm as respetivas licenças; os direitos sobre marcas de terceiros não são concedidos por esta licença.
+[Ver o novo design da aplicação desktop](docs/screenshots/desktop-home.png). A interface usa fontes Inter/Sora incluídas, navegação por etapas e um formulário de pagamento em duas colunas.
+
 ## Compilar a aplicação Rust
 
 Instalar Rust estável e as ferramentas de compilação Windows (MSVC Build Tools ou MinGW para a toolchain GNU):

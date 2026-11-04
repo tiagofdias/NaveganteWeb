@@ -1,6 +1,6 @@
 # Signing direct Windows downloads
 
-The public 2.0 executable is currently unsigned. The scripts below prepare the
+The public 2.1 executable is currently unsigned. The scripts below prepare the
 Authenticode release process; they do not issue a certificate or establish
 SmartScreen reputation by themselves.
 
