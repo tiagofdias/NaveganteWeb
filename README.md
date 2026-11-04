@@ -20,6 +20,8 @@ Não é necessário instalar runtimes, abrir um terminal, copiar códigos ou ini
 **Requisitos:** Windows 10/11 de 64 bits, ligação à Internet, drivers gráficos com OpenGL 3.3 e leitor PC/SC com os respetivos drivers. macOS e Linux ainda não têm aplicação distribuída. Não é necessário o antigo Navegante Link.
 
 **Versão de teste:** o executável ainda não tem assinatura digital de editor. Não se deve desativar as proteções do Windows para o executar. Uma distribuição final ao público deverá incluir assinatura digital.
+
+A preparação para assinar os downloads com identidade verificada está em [docs/signing.md](docs/signing.md). O processo usa SHA-256, timestamp e verificação obrigatória antes de produzir um artefacto assinado. A emissão do certificado continua pendente.
 ## Compilar a aplicação Rust
 
 Instalar Rust estável e as ferramentas de compilação Windows (MSVC Build Tools ou MinGW para a toolchain GNU):

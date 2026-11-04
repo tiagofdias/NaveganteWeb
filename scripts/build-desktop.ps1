@@ -1,4 +1,9 @@
-﻿$ErrorActionPreference = 'Stop'
+﻿param(
+    [switch]$Sign,
+    [string]$CertificateThumbprint = $env:NAVEGANTE_SIGNING_THUMBPRINT
+)
+$ErrorActionPreference = 'Stop'
+if ($Sign -and -not $CertificateThumbprint) { throw 'Supply -CertificateThumbprint or NAVEGANTE_SIGNING_THUMBPRINT for a signed release.' }
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Push-Location $projectRoot
 try {
@@ -19,6 +24,11 @@ try {
     New-Item -ItemType Directory -Force release | Out-Null
     Copy-Item -LiteralPath native/target/release/navegante-desktop.exe -Destination release/Navegante-Web.exe
     Get-FileHash -Algorithm SHA256 -LiteralPath release/Navegante-Web.exe
+    if ($Sign) {
+        & "$PSScriptRoot/sign-desktop.ps1" -CertificateThumbprint $CertificateThumbprint
+    } else {
+        Write-Output 'Unsigned development build. For public signing use -Sign -CertificateThumbprint <thumbprint>.'
+    }
 } finally {
     Pop-Location
 }

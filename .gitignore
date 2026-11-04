@@ -18,6 +18,8 @@ web/assets/
 docs/card-art.md
 release/
 native/target/
+*.pfx
+*.p12
 
 .vercel
 .env*
