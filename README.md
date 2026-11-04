@@ -1,24 +1,25 @@
 # Navegante Web
 
-Aplicação web local para consultar e carregar um passe Navegante com um leitor USB PC/SC, sem base de dados própria. Projeto independente, sem afiliação à TML.
+Demo online e aplicação Windows para consultar e carregar um passe Navegante com um leitor USB PC/SC, sem base de dados própria. Projeto independente, sem afiliação à TML.
 
 **Site público:** https://navegante-web-xi.vercel.app · **Repositório:** https://github.com/tiagofdias/NaveganteWeb
 
-## Usar o site online com o leitor USB
+## Usar a aplicação Windows
 
-O site pode ser usado por qualquer pessoa com **Windows 64 bits e um leitor PC/SC compatível**. Não é preciso instalar Python, abrir um terminal ou copiar códigos.
+O site público é **apenas uma demo**. Não contacta leitores, não cobra pagamentos e não carrega cartões reais.
 
-1. [Descarregar o Navegante Link](https://github.com/tiagofdias/NaveganteWeb/releases/download/v1.1.0/Navegante-Link.exe) e abrir a aplicação.
-2. Ligar o leitor USB e abrir o [site público](https://navegante-web-xi.vercel.app).
-3. Escolher **Ligar leitor** no site e autorizar a ligação na janela do Navegante Link. Permitir também o acesso local/do dispositivo quando o navegador pedir.
-4. Inserir o passe e seguir os passos de leitura, pagamento e carregamento. Manter a aplicação aberta até terminar.
+A aplicação Windows tem **exatamente a mesma interface**, com acesso ao leitor real:
 
-Cada pessoa usa o seu cartão e leitor, sem conta GitHub ou Vercel. A aplicação só aceita o domínio público autorizado. O emparelhamento é aprovado numa janela, e a credencial fica apenas em memória; não é enviada para a Vercel nem introduzida manualmente. Os serviços oficiais continuam a decidir preços, elegibilidade e autorizações de carregamento.
+1. [Descarregar o Navegante-Web.exe](https://github.com/tiagofdias/NaveganteWeb/releases/download/v1.2.0/Navegante-Web.exe) e abrir o ficheiro.
+2. A página abre numa janela própria. Ligar um leitor PC/SC compatível e inserir o cartão.
+3. Escolher **Ler o meu passe**, selecionar o título ou saldo e seguir os passos apresentados.
+4. Confirmar o pagamento quando necessário e gravar o carregamento. Aguardar a confirmação antes de retirar o cartão.
 
-**Compatibilidade:** Windows 64 bits e leitor PC/SC; ligação HTTPS → localhost verificada em Edge. Preferir Edge ou Chrome atualizados. macOS e Linux ainda não têm aplicação distribuída. Sem a aplicação, pode experimentar o modo demo.
+Não é necessário instalar Python, abrir um terminal, copiar códigos ou iniciar sessão no GitHub/Vercel. A aplicação inclui o servidor e os ficheiros da interface. Usa o Microsoft Edge já instalado no Windows para apresentar a mesma página numa janela de aplicação, sem barra de endereços; o acesso ao leitor e aos serviços oficiais decorre no PC do utilizador.
 
-**Distribuição:** esta versão é portátil e ainda não tem assinatura digital de editor. Não se deve desativar as proteções do Windows para a executar. Uma distribuição de produção para o público deverá incluir assinatura digital.
+**Requisitos:** Windows 64 bits, Microsoft Edge e leitor PC/SC com os respetivos drivers. macOS e Linux ainda não têm aplicação distribuída. Não é necessária a instalação do antigo Navegante Link.
 
+**Versão de teste:** o executável ainda não tem assinatura digital de editor. Não se deve desativar as proteções do Windows para o executar. Uma distribuição final ao público deverá incluir assinatura digital.
 ## Desenvolvimento local
 
 
@@ -52,7 +53,7 @@ Verificação de isolamento e fluxo completo: `npm ci` e `node tests/demo.cjs` (
 
 ## Publicar a interface
 
-`npm run build` prepara apenas a interface estática em `dist/`, configurada por `vercel.json` para a Vercel. A publicação mantém a ligação ao leitor através da ponte local, não executa PC/SC na cloud. Ver [arquitetura, limites do Hobby e testes](docs/deployment.md).
+`npm run build` prepara apenas a interface estática em `dist/`, configurada por `vercel.json` para a Vercel. A publicação é exclusivamente demonstrativa: inicia a demo automaticamente e bloqueia operações reais. Para cartões físicos, distribui-se a mesma interface no executável Windows. Ver [arquitetura, limites do Hobby e testes](docs/deployment.md).
 
 ## O que foi efetivamente validado
 

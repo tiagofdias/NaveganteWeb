@@ -50,7 +50,8 @@ http.serve_forever()
     page.on('request',r=>{if(r.url().startsWith(`http://127.0.0.1:${port}`))calls.push(new URL(r.url()).pathname);});
     await page.route(origin+'/**',async route=>{
       const file=new URL(route.request().url()).pathname.slice(1)||'index.html';
-      const content=fs.readFileSync(path.join(__dirname,'..','dist',file),'utf8').replaceAll('http://127.0.0.1:8765',`http://127.0.0.1:${port}`);
+      // Exercise the optional bridge independently of the demo-only public build.
+      const content=fs.readFileSync(path.join(__dirname,'..','dist',file),'utf8').replace('data-hosted-demo="true"','data-remote="true"').replaceAll('http://127.0.0.1:8765',`http://127.0.0.1:${port}`);
       await route.fulfill({contentType:file.endsWith('.css')?'text/css':file.endsWith('.js')?'text/javascript':'text/html',
         headers:{'Content-Security-Policy':`default-src 'self'; connect-src 'self' http://127.0.0.1:${port}; base-uri 'self'; form-action 'self'`},body:content});
     });

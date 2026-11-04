@@ -1,51 +1,62 @@
-# Publicação e acesso ao leitor
+﻿# Publicação da demo e aplicação Windows
+
+## Experiência pública
+
+- O site https://navegante-web-xi.vercel.app inicia automaticamente uma demo com dados fictícios.
+- O site não procura leitores, não inicia pagamentos e não grava cartões reais.
+- A página explica como descarregar a aplicação Windows e usar o mesmo percurso com um cartão real.
+- A aplicação é o mesmo HTML, CSS e JavaScript, apresentado numa janela própria do Microsoft Edge. Não é um conector que obrigue a voltar ao site.
 
 ## Arquitetura
 
-O mesmo site serve todos os utilizadores. A Vercel distribui apenas quatro ficheiros estáticos: HTML, JavaScript e duas folhas de estilos. Não recebe comandos USB, códigos de ligação, dados de cartões ou pedidos de pagamento. O JavaScript efetua as operações reais diretamente contra a ponte no PC de quem está a usar o site.
-
 ```text
-Navegador (site HTTPS na Vercel)
-        │ aprovação na aplicação + origem HTTPS autorizada
-        ▼
-127.0.0.1:8765 (server.py no PC do utilizador)
-        ├── Windows PC/SC → leitor USB → cartão
-        └── serviços oficiais de bilhética/pagamento
+Vercel → interface estática → simulação no navegador
+
+Navegante-Web.exe (Windows)
+  ├── mesma interface numa janela própria
+  └── servidor local numa porta livre de 127.0.0.1
+       ├── Windows PC/SC → leitor USB → cartão
+       └── serviços oficiais de bilhética/pagamento
 ```
 
-Cada aplicação aceita uma única origem HTTPS exata e gera uma credencial aleatória por arranque. A rota /api/pair só devolve essa credencial depois de aprovação explícita numa janela nativa; não são pedidos códigos ao utilizador. CORS, verificação de Host e o cabeçalho `X-Navegante-Token` são exigidos para acesso remoto. A credencial só fica na memória do processo e da página; não existe base de dados, cookie ou armazenamento no navegador. Uma visita ao site não faz pedidos à ponte antes do clique de ligação. Operações reais no serviço são serializadas para impedir submissões simultâneas.
+O build público ativa `data-hosted-demo="true"`. A função de pedidos bloqueia operações reais nesse modo e a CSP usa `connect-src 'none'`. Não existe opção de sair para um modo real na Vercel. Não são publicados backends Python ou segredos na cloud.
 
-O utilizador tem de autorizar o acesso local/do dispositivo no navegador. A implementação usa `targetAddressSpace: 'loopback'` e pedidos CORS normais, sem desativar proteções do navegador. Referência: [Chrome — Local Network Access](https://developer.chrome.com/docs/modern-web-guidance/guides/security/local-network-access).
+O executável contém Python e os quatro ficheiros da interface. Requer Windows 64 bits, Microsoft Edge e drivers do leitor. Abre o Edge em modo de aplicação, com um perfil temporário próprio, sem usar o perfil pessoal do utilizador. O servidor local usa uma porta livre e não aceita origens remotas. Ao fechar a janela, espera por uma operação de cartão em curso antes de terminar o serviço. Não usa base de dados própria nem guarda sessões de cartões em ficheiros.
 
-## Vercel Hobby
+O código da ponte emparelhada permanece para desenvolvimento avançado e regressão, mas não faz parte do percurso público atual. O antigo Navegante Link não é necessário.
 
-Verificado em 4 de novembro de 2026: o [Hobby custa 0 USD/mês](https://vercel.com/pricing), é [destinado a uso pessoal e não comercial](https://vercel.com/docs/plans/hobby) e tem limites de utilização. A documentação indica que normalmente, ao ultrapassar limites, é necessário aguardar a reposição, em vez de comprar capacidade adicional no Hobby. Não foi selecionado Pro, base de dados, armazenamento pago ou domínio comprado. O custo da compra de títulos ao operador não é um custo de alojamento.
+## Compilar
 
-## Build
+Interface pública:
 
 ```powershell
 npm ci
 npm run build
 ```
 
-`scripts/build.mjs` cria `dist/` e ativa a ligação remota apenas na cópia publicada do HTML. A interface servida por `python server.py` continua a funcionar diretamente em localhost. `vercel.json` define o build estático e a política CSP; nenhum ficheiro Python é publicado como função serverless.
+Aplicação Windows, a partir de Windows com Python 3.13:
 
-## Testes
+```powershell
+python -m pip install -r requirements-build.txt
+./scripts/build-desktop.ps1
+```
+
+Resultado: `release/Navegante-Web.exe`. A versão de PyInstaller está fixada em `requirements-build.txt`. A aplicação é portátil e não pede Python ao utilizador. O teste `--self-test` verifica o runtime gráfico, a página incluída e a enumeração de leitores, sem ler ou alterar cartões.
+
+**Assinatura:** o executável ainda não tem assinatura digital de editor; é distribuído como versão de teste. A assinatura continua pendente para distribuição final ao público. Não se contornam proteções do Windows.
+
+## Verificação
 
 ```powershell
 python -m unittest discover -s tests
+npm run build
+node tests/hosted-demo.cjs
 node tests/demo.cjs
 node tests/browser.cjs
-npm run build
-node tests/hosted-bridge.cjs
 ```
 
-Os testes do navegador usam Edge no Windows quando disponível. Também é possível definir `PLAYWRIGHT_BROWSER_EXECUTABLE` ou instalar o Chromium do Playwright com `npx playwright install chromium`. O teste `tests/browser.cjs` só faz uma leitura física se `NAVEGANTE_LIVE_READ=1` for definido explicitamente. Não inicia pagamentos nem gravações físicas.
+O teste da demo publicada verifica arranque automático, bloqueio do modo real e zero chamadas de rede, incluindo no percurso de pagamento e gravação simulados. O teste desktop verifica que a aplicação apresenta exatamente o HTML local, numa janela própria e com porta efémera. Os testes financeiros usam serviços simulados; não iniciam pagamentos ou gravações físicas.
 
-Os APKs, código descompilado, ferramentas de análise, arte abandonada, credenciais e ficheiros temporários não fazem parte do repositório ou do build público.
+## Vercel Hobby
 
-## Aplicação Windows
-
-O executável portátil é criado em Windows com Python 3.13 e a versão fixada em requirements-build.txt. Para reproduzir: instalar as dependências de build e executar scripts/build-desktop.ps1. O ficheiro release/Navegante-Link.exe inclui Python e Tcl/Tk; não abre consola. O arranque normal nunca aceita automaticamente o emparelhamento. O parâmetro de teste --self-test verifica o runtime e o transporte numa porta efémera com origem fictícia, sem leituras ou gravações de cartões.
-
-A versão publicada ainda não está assinada digitalmente. A assinatura de editor continua pendente para distribuição final ao público; não se contornam proteções do sistema operativo.
+Verificado em 4 de novembro de 2026: o [Hobby custa 0 USD/mês](https://vercel.com/pricing), é [destinado a uso pessoal e não comercial](https://vercel.com/docs/plans/hobby) e está sujeito a limites de utilização. A publicação é estática, sem base de dados ou armazenamento pago. O custo de títulos de transporte é independente do alojamento.

@@ -2,6 +2,7 @@ const $ = id => document.getElementById(id);
 const state = {busy:false, session:null, card:null, details:null, quote:null, purchase:null, catalogReady:false, showDetails:false, showReader:false, catalog:null, metropolitanActive:false, showOtherPasses:false};
 const euros = cents => new Intl.NumberFormat('pt-PT',{style:'currency',currency:'EUR'}).format(cents/100);
 const remoteMode=document.body.dataset.remote==='true';
+const hostedDemo=document.body.dataset.hostedDemo==='true';
 const bridgeClient={token:'',ready:false};
 const bridgeAddress='http://127.0.0.1:8765';
 // Demo operations are handled entirely in memory, before any network request.
@@ -134,6 +135,7 @@ function usefulCardFields(items, kind) {
 }
 async function request(path, body) {
   if(demo.enabled)return demoRequest(path,body);
+  if(hostedDemo)throw Error('Esta página é apenas uma demonstração. Descarrega o projeto para utilizar um cartão real no teu PC.');
   if(remoteMode&&!bridgeClient.token&&path!=='pair')throw Error('Abre o Navegante Link no teu PC e escolhe «Ligar leitor».');
   const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),150000);
   try {
@@ -159,6 +161,8 @@ function presentation() {
   $('demo-banner').hidden=!demo.enabled;
   $('demo-toggle').textContent=demo.enabled?'Sair da demo':'Experimentar demo';
   $('demo-toggle').setAttribute('aria-pressed',String(demo.enabled));
+  $('demo-toggle').hidden=hostedDemo;
+  $('live-instructions').hidden=!hostedDemo;
   $('demo-scenario-field').hidden=!demo.enabled||hasCard||Boolean(state.purchase);
   $('bridge-panel').hidden=!remoteMode||demo.enabled;
   $('bridge-form').hidden=bridgeClient.ready;
@@ -259,6 +263,7 @@ function resetInterface() {
   controls();
 }
 async function changeDemo(enabled) {
+  if(hostedDemo)enabled=true;
   if(state.busy||(!demo.enabled&&state.purchase&&state.purchase.state!=='loaded'))return;
   demo.enabled=enabled;demo.card=null;demo.quote=null;demo.sale=null;demo.scenario=null;
   resetInterface();
@@ -271,8 +276,8 @@ async function refresh() {
   const {readers}=await request('readers');
   $('reader').replaceChildren(new Option('Seleciona o leitor…',''));
   readers.forEach(name=>$('reader').add(new Option(name,name)));
-  $('reader').value=readers.includes(previous)?previous:(readers.find(name=>/^THRC /i.test(name))||'');
-  $('status').textContent=demo.enabled?'Leitor virtual pronto. Não precisas de ligar nenhum equipamento.':readers.length?'Insere o passe e inicia a leitura.':'Nenhum leitor encontrado. Liga o Conceptronic e atualiza a lista.';
+  $('reader').value=readers.includes(previous)?previous:(readers.find(name=>/^THRC /i.test(name))||(readers.length===1?readers[0]:''));
+  $('status').textContent=demo.enabled?'Leitor virtual pronto. Não precisas de ligar nenhum equipamento.':readers.length?'Insere o passe e inicia a leitura.':'Nenhum leitor encontrado. Liga o teu leitor e atualiza a lista.';
   if(demo.enabled)$('reader').value='Leitor virtual · Demo';
 }
 function renderCard(card) {
@@ -537,5 +542,6 @@ passPreview.addEventListener('pointermove',event=>{
 passPreview.addEventListener('pointerleave',resetCardMotion);
 passPreview.addEventListener('pointercancel',resetCardMotion);
 reducedMotion.addEventListener('change',resetCardMotion);
-if(remoteMode){$('reader').replaceChildren(new Option('Liga primeiro o leitor do teu PC',''));$('status').textContent='Abre o Navegante Link e liga o leitor ou experimenta a demo.';controls();}
+if(hostedDemo)changeDemo(true);
+else if(remoteMode){$('reader').replaceChildren(new Option('Liga primeiro o leitor do teu PC',''));$('status').textContent='Abre o Navegante Link e liga o leitor ou experimenta a demo.';controls();}
 else action('status',refresh);
